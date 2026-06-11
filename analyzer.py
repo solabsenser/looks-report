@@ -1,7 +1,11 @@
 import os
 import re
 import cv2
+
+# Самый надежный и прямой импорт решений face_mesh напрямую из пакета
 import mediapipe as mp
+import mediapipe.python.solutions.face_mesh as mp_face_mesh
+
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -23,10 +27,8 @@ def calculate_face_metrics(image_path):
 
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    # Динамически достаем face_mesh, это работает на любых версиях пакета
-    face_mesh_solutions = getattr(mp.solutions, "face_mesh")
-
-    with face_mesh_solutions.FaceMesh(
+    # Используем напрямую импортированный модуль face_mesh
+    with mp_face_mesh.FaceMesh(
         static_image_mode=True,
         max_num_faces=1,
         refine_landmarks=True,
