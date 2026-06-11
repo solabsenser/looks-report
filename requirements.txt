@@ -1,4 +1,5 @@
 aiogram==3.18.0
+aiohttp==3.11.13
 google-generativeai==0.8.4
 mediapipe==0.10.35
 opencv-python-headless==4.10.0.84
