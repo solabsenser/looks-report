@@ -1,8 +1,11 @@
 import os
 import re
-
 import cv2
+
+# Исправленный импорт MediaPipe под новые версии
 import mediapipe as mp
+import mediapipe.python.solutions.face_mesh as mp_face_mesh_solution
+
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -15,7 +18,8 @@ if not GEMINI_API_KEY:
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-mp_face_mesh = mp.solutions.face_mesh
+# Привязываем исправленный модуль
+mp_face_mesh = mp_face_mesh_solution
 
 
 def calculate_face_metrics(image_path):
@@ -140,7 +144,6 @@ def extract_score(report):
 
 def analyze_face(image_path):
     try:
-
         metrics = calculate_face_metrics(image_path)
 
         if metrics is None:
@@ -174,7 +177,6 @@ def analyze_face(image_path):
         }
 
     except Exception as e:
-
         return {
             "score": 0,
             "report": (
@@ -185,7 +187,6 @@ def analyze_face(image_path):
 
 
 if __name__ == "__main__":
-
     result = analyze_face("photo.jpg")
 
     print("SCORE:")
