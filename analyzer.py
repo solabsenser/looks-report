@@ -1,12 +1,19 @@
+import os
+import re
+
 import cv2
 import mediapipe as mp
 import google.generativeai as genai
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY not found in .env")
+
+genai.configure(api_key=GEMINI_API_KEY)
 
 mp_face_mesh = mp.solutions.face_mesh
 
@@ -16,8 +23,6 @@ def calculate_face_metrics(image_path):
 
     if image is None:
         return None
-
-    h, w = image.shape[:2]
 
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
@@ -66,61 +71,125 @@ def build_prompt(metrics):
     return f"""
 You are a facial analysis assistant.
 
-Based ONLY on these visible image measurements:
+Analyze only visible facial characteristics and image quality.
+
+Measurements:
 
 Symmetry Score: {metrics['symmetry']}
 Face Ratio: {metrics['face_ratio']}
 Brightness: {metrics['brightness']}
 
-Create a report in EXACTLY this format:
+IMPORTANT:
+
+Return the report in Russian.
+
+The first line MUST be:
+
+⭐ Overall Rating: X.X/10
+
+Use this exact wording.
+
+Format exactly:
 
 📊 FACE ANALYSIS REPORT
 
 ⭐ Overall Rating: X.X/10
 
-👁 Facial Symmetry: X.X/10
-📏 Facial Proportions: X.X/10
-🦴 Jawline Definition: X.X/10
-👃 Nose: X.X/10
-👄 Lips: X.X/10
-👀 Eye Area: X.X/10
+👁 Симметрия лица: X.X/10
+📏 Пропорции лица: X.X/10
+🦴 Выраженность челюсти: X.X/10
+👃 Нос: X.X/10
+👄 Губы: X.X/10
+👀 Область глаз: X.X/10
 
-🧔 Potential: Low / Medium / High
+🧔 Потенциал внешности: Низкий / Средний / Высокий
 
-Strengths:
-✅ item
-✅ item
+Плюсы:
+✅ пункт
+✅ пункт
 
-Weaknesses:
-⚠ item
-⚠ item
+Минусы:
+⚠ пункт
+⚠ пункт
 
-Recommendations:
-• item
-• item
-• item
+Рекомендации:
+• пункт
+• пункт
+• пункт
 
-Keep the tone constructive and neutral.
-Do not insult the person.
+Keep the report constructive.
+Do not insult the user.
+Do not use markdown.
 """
 
 
-def analyze_face(image_path):
-    metrics = calculate_face_metrics(image_path)
-
-    if metrics is None:
-        return (
-            "❌ Не удалось обнаружить лицо.\n\n"
-            "Попробуйте загрузить фото:\n"
-            "• анфас\n"
-            "• хорошее освещение\n"
-            "• один человек в кадре"
-        )
-
-    model = genai.GenerativeModel("gemini-2.5-flash")
-
-    response = model.generate_content(
-        build_prompt(metrics)
+def extract_score(report):
+    match = re.search(
+        r"Overall Rating:\s*(\d+(?:\.\d+)?)",
+        report
     )
 
-    return response.text
+    if match:
+        try:
+            return float(match.group(1))
+        except Exception:
+            return 0.0
+
+    return 0.0
+
+
+def analyze_face(image_path):
+    try:
+
+        metrics = calculate_face_metrics(image_path)
+
+        if metrics is None:
+            return {
+                "score": 0,
+                "report": (
+                    "❌ Не удалось обнаружить лицо.\n\n"
+                    "Попробуйте загрузить фото:\n"
+                    "• анфас\n"
+                    "• хорошее освещение\n"
+                    "• один человек в кадре\n"
+                    "• лицо должно быть полностью видно"
+                )
+            }
+
+        model = genai.GenerativeModel(
+            "gemini-2.5-flash"
+        )
+
+        response = model.generate_content(
+            build_prompt(metrics)
+        )
+
+        report = response.text.strip()
+
+        score = extract_score(report)
+
+        return {
+            "score": score,
+            "report": report
+        }
+
+    except Exception as e:
+
+        return {
+            "score": 0,
+            "report": (
+                "❌ Ошибка анализа изображения.\n\n"
+                f"Детали: {str(e)}"
+            )
+        }
+
+
+if __name__ == "__main__":
+
+    result = analyze_face("photo.jpg")
+
+    print("SCORE:")
+    print(result["score"])
+
+    print("\nREPORT:")
+    print(result["report"])
