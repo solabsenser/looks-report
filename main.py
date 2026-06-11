@@ -7,11 +7,12 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
+from aiohttp import web
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
-# Импорт оригинальной функции из твоего analyzer.py
-from analyzer import analyze_face
+# Import from a new module name so stale Render builds cannot load old analyzer.py.
+from face_analyzer import ANALYZER_BACKEND, analyze_face
 
 # Настройка логирования
 logging.basicConfig(
@@ -101,7 +102,7 @@ async def process_how_it_works(callback: CallbackQuery):
     info_text = (
         "❓ **Как устроен анализ лица?**\n\n"
         "1️⃣ Вы отправляете снимок в систему.\n"
-        "2️⃣ Алгоритм **MediaPipe Face Mesh** разворачивает сетку из сотен ключевых точек.\n"
+        "2️⃣ Алгоритм **MediaPipe Face Landmarker** разворачивает сетку из сотен ключевых точек.\n"
         "3️⃣ Программа вычисляет индекс симметрии и соотношение сторон (вертикаль/горизонталь).\n"
         "4️⃣ Нейросеть **Gemini 2.5 Flash** агрегирует данные и пишет развернутые рекомендации."
     )
@@ -250,14 +251,46 @@ async def system_health_check(message: Message):
         "⚙️ **System Diagnostics Status:**\n\n"
         f"• Gateway API: `Aiogram 3.x Long-Polling` \n"
         f"• Database Node: `{db_status}`\n"
+        f"• Analyzer Backend: `{ANALYZER_BACKEND}`\n"
         f"• Host Machine Node: `Render Cloud Environment` \n"
         f"• Request Timestamp: `{datetime.utcnow().isoformat()}`"
     )
     await message.answer(uptime_text, parse_mode="Markdown")
 
+async def healthcheck(request: web.Request) -> web.Response:
+    return web.json_response({"status": "ok", "analyzer_backend": ANALYZER_BACKEND})
+
+
+async def start_health_server() -> web.AppRunner | None:
+    port = os.getenv("PORT")
+
+    if not port:
+        logger.info("PORT is not set; health web server is disabled.")
+        return None
+
+    app = web.Application()
+    app.router.add_get("/", healthcheck)
+    app.router.add_get("/health", healthcheck)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+
+    site = web.TCPSite(runner, host="0.0.0.0", port=int(port))
+    await site.start()
+
+    logger.info("Health web server is listening on port %s.", port)
+    return runner
+
+
 async def main():
-    logger.info("Initializing polling engine...")
-    await dp.start_polling(bot)
+    logger.info("Initializing polling engine with analyzer backend: %s", ANALYZER_BACKEND)
+    health_runner = await start_health_server()
+
+    try:
+        await dp.start_polling(bot)
+    finally:
+        if health_runner:
+            await health_runner.cleanup()
 
 if __name__ == "__main__":
     try:
