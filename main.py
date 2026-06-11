@@ -259,6 +259,7 @@ async def system_health_check(message: Message):
 
 async def healthcheck(request: web.Request) -> web.Response:
     return web.json_response({"status": "ok", "analyzer_backend": ANALYZER_BACKEND})
+    return web.json_response({"status": "ok"})
 
 
 async def start_health_server() -> web.AppRunner | None:
@@ -284,6 +285,7 @@ async def start_health_server() -> web.AppRunner | None:
 
 async def main():
     logger.info("Initializing polling engine with analyzer backend: %s", ANALYZER_BACKEND)
+    logger.info("Initializing polling engine...")
     health_runner = await start_health_server()
 
     try:
