@@ -3,14 +3,14 @@ import logging
 import asyncio
 from datetime import datetime
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
-# Импорт оригинальной функции
+# Импорт оригинальной функции из твоего analyzer.py
 from analyzer import analyze_face
 
 # Настройка логирования
@@ -33,11 +33,15 @@ if not BOT_TOKEN:
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# Инициализация Supabase
+# Инициализация Supabase с проверкой валидности URL
 supabase: Client = None
 if SUPABASE_URL and SUPABASE_KEY:
     try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        # Убираем случайные пробелы и кавычки, если они пролезли из env
+        clean_url = SUPABASE_URL.strip().replace('"', '').replace("'", "")
+        clean_key = SUPABASE_KEY.strip().replace('"', '').replace("'", "")
+        
+        supabase = create_client(clean_url, clean_key)
         logger.info("Supabase client initialized successfully.")
     except Exception as e:
         logger.error(f"Failed to initialize Supabase client: {e}")
@@ -78,7 +82,7 @@ async def cmd_start(message: Message, state: FSMContext):
     )
     await message.answer(welcome_text, reply_markup=get_main_menu(), parse_mode="Markdown")
 
-@dp.callbackQuery(F.data == "main_menu")
+@dp.callback_query(F.data == "main_menu")
 async def back_to_main_menu(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.answer()
@@ -91,7 +95,7 @@ async def back_to_main_menu(callback: CallbackQuery, state: FSMContext):
     except Exception:
         await callback.message.answer(welcome_text, reply_markup=get_main_menu(), parse_mode="Markdown")
 
-@dp.callbackQuery(F.data == "menu_how_it_works")
+@dp.callback_query(F.data == "menu_how_it_works")
 async def process_how_it_works(callback: CallbackQuery):
     await callback.answer()
     info_text = (
@@ -103,7 +107,7 @@ async def process_how_it_works(callback: CallbackQuery):
     )
     await callback.message.edit_text(info_text, reply_markup=get_back_btn(), parse_mode="Markdown")
 
-@dp.callbackQuery(F.data == "menu_premium")
+@dp.callback_query(F.data == "menu_premium")
 async def process_premium(callback: CallbackQuery):
     await callback.answer()
     premium_text = (
@@ -116,7 +120,7 @@ async def process_premium(callback: CallbackQuery):
     )
     await callback.message.edit_text(premium_text, reply_markup=get_back_btn(), parse_mode="Markdown")
 
-@dp.callbackQuery(F.data == "menu_rate")
+@dp.callback_query(F.data == "menu_rate")
 async def process_rate_photo(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.set_state(AnalyzerStates.waiting_for_photo)
@@ -131,7 +135,7 @@ async def process_rate_photo(callback: CallbackQuery, state: FSMContext):
     )
     await callback.message.edit_text(instruction_text, reply_markup=get_back_btn(), parse_mode="Markdown")
 
-@dp.callbackQuery(F.data == "menu_history")
+@dp.callback_query(F.data == "menu_history")
 async def process_history(callback: CallbackQuery):
     await callback.answer()
     user_id = callback.from_user.id
@@ -211,7 +215,6 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
 
         await bot.delete_message(chat_id=message.chat.id, message_id=waiting_msg.message_id)
         
-        # Вывод результата
         await message.reply(report, reply_markup=get_back_btn())
         await state.clear()
 
@@ -234,7 +237,7 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
 @dp.message(AnalyzerStates.waiting_for_photo)
 async def handle_invalid_input_type(message: Message):
     await message.reply(
-        "⚠️ **Некорректный формат данных**\n\nСистема ожидает прямую передачу графического файла (изображения/фотографии).\nПожалуйста, пришлите снимок лица или нажмите кнопку возврата ниже.",
+        "⚠️ **Некорректный формат данных**\n\nСистема ожичает прямую передачу графического файла (изображения/фотографии).\nПожалуйста, пришлите снимок лица или нажмите кнопку возврата ниже.",
         reply_markup=get_back_btn()
     )
 
