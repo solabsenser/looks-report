@@ -6,4 +6,3 @@ opencv-python-headless==4.10.0.84
 supabase==2.13.0
 python-dotenv==1.0.1
 numpy==1.26.4
-panda3d==1.10.14
