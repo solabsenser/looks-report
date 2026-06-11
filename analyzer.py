@@ -2,9 +2,11 @@ import os
 import re
 import cv2
 
-# Самый надежный и прямой импорт решений face_mesh напрямую из пакета
+# MediaPipe exposes FaceMesh through the public ``solutions`` namespace.
+# Private MediaPipe package paths are not stable on Render/Linux wheels.
 import mediapipe as mp
-import mediapipe.python.solutions.face_mesh as mp_face_mesh
+
+mp_face_mesh = mp.solutions.face_mesh
 
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -27,7 +29,7 @@ def calculate_face_metrics(image_path):
 
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    # Используем напрямую импортированный модуль face_mesh
+    # Используем публичный API MediaPipe FaceMesh.
     with mp_face_mesh.FaceMesh(
         static_image_mode=True,
         max_num_faces=1,

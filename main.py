@@ -7,6 +7,7 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
+from aiohttp import web
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
@@ -255,9 +256,40 @@ async def system_health_check(message: Message):
     )
     await message.answer(uptime_text, parse_mode="Markdown")
 
+async def healthcheck(request: web.Request) -> web.Response:
+    return web.json_response({"status": "ok"})
+
+
+async def start_health_server() -> web.AppRunner | None:
+    port = os.getenv("PORT")
+
+    if not port:
+        logger.info("PORT is not set; health web server is disabled.")
+        return None
+
+    app = web.Application()
+    app.router.add_get("/", healthcheck)
+    app.router.add_get("/health", healthcheck)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+
+    site = web.TCPSite(runner, host="0.0.0.0", port=int(port))
+    await site.start()
+
+    logger.info("Health web server is listening on port %s.", port)
+    return runner
+
+
 async def main():
     logger.info("Initializing polling engine...")
-    await dp.start_polling(bot)
+    health_runner = await start_health_server()
+
+    try:
+        await dp.start_polling(bot)
+    finally:
+        if health_runner:
+            await health_runner.cleanup()
 
 if __name__ == "__main__":
     try:
