@@ -51,7 +51,14 @@ def detect_face_landmarks(rgb_image):
     model_path = ensure_face_landmarker_model()
 
     options = vision.FaceLandmarkerOptions(
-        base_options=python.BaseOptions(model_asset_path=str(model_path)),
+        # Force the CPU delegate so MediaPipe does not try to initialize GPU
+        # acceleration in headless servers where OpenGL ES libraries are often
+        # unavailable. The system package for libGLESv2 is still listed in the
+        # deploy files because the MediaPipe wheel can dynamically link to it.
+        base_options=python.BaseOptions(
+            model_asset_path=str(model_path),
+            delegate=python.BaseOptions.Delegate.CPU,
+        ),
         running_mode=vision.RunningMode.IMAGE,
         num_faces=1,
         min_face_detection_confidence=0.5,
