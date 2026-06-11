@@ -1,14 +1,4 @@
 import os
-import sys
-
-# Находим, где лежат установленные библиотеки Python
-site_packages = [p for p in sys.path if 'site-packages' in p]
-if site_packages:
-    # Прописываем путь к бинарникам panda3d, где лежит заветный libGLESv2
-    panda_path = os.path.join(site_packages[0], 'panda3d')
-    if os.path.exists(panda_path):
-        os.environ['LD_LIBRARY_PATH'] = f"{panda_path}:{os.environ.get('LD_LIBRARY_PATH', '')}"
-
 import logging
 import asyncio
 from datetime import datetime
