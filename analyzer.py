@@ -1,11 +1,7 @@
 import os
 import re
 import cv2
-
-# Исправленный импорт MediaPipe под новые версии
 import mediapipe as mp
-import mediapipe.python.solutions.face_mesh as mp_face_mesh_solution
-
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -18,9 +14,6 @@ if not GEMINI_API_KEY:
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-# Привязываем исправленный модуль
-mp_face_mesh = mp_face_mesh_solution
-
 
 def calculate_face_metrics(image_path):
     image = cv2.imread(image_path)
@@ -30,7 +23,10 @@ def calculate_face_metrics(image_path):
 
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    with mp_face_mesh.FaceMesh(
+    # Динамически достаем face_mesh, это работает на любых версиях пакета
+    face_mesh_solutions = getattr(mp.solutions, "face_mesh")
+
+    with face_mesh_solutions.FaceMesh(
         static_image_mode=True,
         max_num_faces=1,
         refine_landmarks=True,
