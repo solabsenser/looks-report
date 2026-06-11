@@ -8,6 +8,11 @@ import cv2
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+# MediaPipe exposes FaceMesh through the public ``solutions`` namespace.
+# Private MediaPipe package paths are not stable on Render/Linux wheels.
+import mediapipe as mp
+
+mp_face_mesh = mp.solutions.face_mesh
 
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -79,6 +84,20 @@ def calculate_face_metrics(image_path):
 
     if landmarks is None:
         return None
+    # Используем публичный API MediaPipe FaceMesh.
+    with mp_face_mesh.FaceMesh(
+        static_image_mode=True,
+        max_num_faces=1,
+        refine_landmarks=True,
+        min_detection_confidence=0.5
+    ) as face_mesh:
+
+        results = face_mesh.process(rgb)
+
+        if not results.multi_face_landmarks:
+            return None
+
+        landmarks = results.multi_face_landmarks[0].landmark
 
     left_eye = landmarks[33]
     right_eye = landmarks[263]
