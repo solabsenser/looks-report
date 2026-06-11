@@ -8,6 +8,9 @@ import cv2
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+import mediapipe as mp
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 # MediaPipe exposes FaceMesh through the public ``solutions`` namespace.
 # Private MediaPipe package paths are not stable on Render/Linux wheels.
 import mediapipe as mp
@@ -28,6 +31,7 @@ FACE_LANDMARKER_MODEL_PATH = Path(
     os.getenv("FACE_LANDMARKER_MODEL_PATH", "models/face_landmarker.task")
 )
 MODEL_DOWNLOAD_LOCK = Lock()
+ANALYZER_BACKEND = "mediapipe-tasks-face-landmarker-v2"
 
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY not found in .env")

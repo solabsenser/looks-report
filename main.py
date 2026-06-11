@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 
 # Импорт оригинальной функции из твоего analyzer.py
-from analyzer import analyze_face
+from analyzer import ANALYZER_BACKEND, analyze_face
 
 # Настройка логирования
 logging.basicConfig(
@@ -251,12 +251,14 @@ async def system_health_check(message: Message):
         "⚙️ **System Diagnostics Status:**\n\n"
         f"• Gateway API: `Aiogram 3.x Long-Polling` \n"
         f"• Database Node: `{db_status}`\n"
+        f"• Analyzer Backend: `{ANALYZER_BACKEND}`\n"
         f"• Host Machine Node: `Render Cloud Environment` \n"
         f"• Request Timestamp: `{datetime.utcnow().isoformat()}`"
     )
     await message.answer(uptime_text, parse_mode="Markdown")
 
 async def healthcheck(request: web.Request) -> web.Response:
+    return web.json_response({"status": "ok", "analyzer_backend": ANALYZER_BACKEND})
     return web.json_response({"status": "ok"})
 
 
@@ -282,6 +284,7 @@ async def start_health_server() -> web.AppRunner | None:
 
 
 async def main():
+    logger.info("Initializing polling engine with analyzer backend: %s", ANALYZER_BACKEND)
     logger.info("Initializing polling engine...")
     health_runner = await start_health_server()
 
