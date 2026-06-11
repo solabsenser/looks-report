@@ -1,7 +1,13 @@
 import os
 import re
-import cv2
+from pathlib import Path
+from threading import Lock
+from urllib.request import urlretrieve
 
+import cv2
+import mediapipe as mp
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 # MediaPipe exposes FaceMesh through the public ``solutions`` namespace.
 # Private MediaPipe package paths are not stable on Render/Linux wheels.
 import mediapipe as mp
@@ -14,11 +20,57 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+FACE_LANDMARKER_MODEL_URL = (
+    "https://storage.googleapis.com/mediapipe-models/face_landmarker/"
+    "face_landmarker/float16/latest/face_landmarker.task"
+)
+FACE_LANDMARKER_MODEL_PATH = Path(
+    os.getenv("FACE_LANDMARKER_MODEL_PATH", "models/face_landmarker.task")
+)
+MODEL_DOWNLOAD_LOCK = Lock()
 
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY not found in .env")
 
 genai.configure(api_key=GEMINI_API_KEY)
+
+
+def ensure_face_landmarker_model():
+    if FACE_LANDMARKER_MODEL_PATH.exists():
+        return FACE_LANDMARKER_MODEL_PATH
+
+    with MODEL_DOWNLOAD_LOCK:
+        if FACE_LANDMARKER_MODEL_PATH.exists():
+            return FACE_LANDMARKER_MODEL_PATH
+
+        FACE_LANDMARKER_MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+        temp_path = FACE_LANDMARKER_MODEL_PATH.with_suffix(".tmp")
+        urlretrieve(FACE_LANDMARKER_MODEL_URL, temp_path)
+        temp_path.replace(FACE_LANDMARKER_MODEL_PATH)
+
+    return FACE_LANDMARKER_MODEL_PATH
+
+
+def detect_face_landmarks(rgb_image):
+    model_path = ensure_face_landmarker_model()
+
+    options = vision.FaceLandmarkerOptions(
+        base_options=python.BaseOptions(model_asset_path=str(model_path)),
+        running_mode=vision.RunningMode.IMAGE,
+        num_faces=1,
+        min_face_detection_confidence=0.5,
+        min_face_presence_confidence=0.5,
+        min_tracking_confidence=0.5,
+    )
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_image)
+
+    with vision.FaceLandmarker.create_from_options(options) as landmarker:
+        results = landmarker.detect(mp_image)
+
+    if not results.face_landmarks:
+        return None
+
+    return results.face_landmarks[0]
 
 
 def calculate_face_metrics(image_path):
@@ -28,7 +80,10 @@ def calculate_face_metrics(image_path):
         return None
 
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    landmarks = detect_face_landmarks(rgb)
 
+    if landmarks is None:
+        return None
     # Используем публичный API MediaPipe FaceMesh.
     with mp_face_mesh.FaceMesh(
         static_image_mode=True,
@@ -44,31 +99,31 @@ def calculate_face_metrics(image_path):
 
         landmarks = results.multi_face_landmarks[0].landmark
 
-        left_eye = landmarks[33]
-        right_eye = landmarks[263]
+    left_eye = landmarks[33]
+    right_eye = landmarks[263]
 
-        nose = landmarks[1]
+    nose = landmarks[1]
 
-        chin = landmarks[152]
-        forehead = landmarks[10]
+    chin = landmarks[152]
+    forehead = landmarks[10]
 
-        face_width = abs(right_eye.x - left_eye.x)
-        face_height = abs(chin.y - forehead.y)
+    face_width = abs(right_eye.x - left_eye.x)
+    face_height = abs(chin.y - forehead.y)
 
-        face_ratio = face_height / max(face_width, 0.001)
+    face_ratio = face_height / max(face_width, 0.001)
 
-        eye_center = (left_eye.x + right_eye.x) / 2
-        symmetry = 1 - abs(nose.x - eye_center)
+    eye_center = (left_eye.x + right_eye.x) / 2
+    symmetry = 1 - abs(nose.x - eye_center)
 
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        brightness = gray.mean()
+    brightness = gray.mean()
 
-        return {
-            "face_ratio": round(face_ratio, 2),
-            "symmetry": round(symmetry * 10, 1),
-            "brightness": round(brightness, 1)
-        }
+    return {
+        "face_ratio": round(face_ratio, 2),
+        "symmetry": round(symmetry * 10, 1),
+        "brightness": round(brightness, 1)
+    }
 
 
 def build_prompt(metrics):
