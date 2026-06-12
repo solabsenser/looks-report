@@ -216,7 +216,7 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
 
         await bot.delete_message(chat_id=message.chat.id, message_id=waiting_msg.message_id)
         
-        await message.reply(report, reply_markup=get_back_btn())
+        await message.reply(report)
         await state.clear()
 
     except Exception as e:
@@ -224,7 +224,6 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
         await bot.delete_message(chat_id=message.chat.id, message_id=waiting_msg.message_id)
         await message.answer(
             f"❌ **Сбой внутренней обработки данных**\n\nПроизошла непредвиденная ошибка на сервере.\nДетали: `{str(e)}`",
-            reply_markup=get_back_btn(),
             parse_mode="Markdown"
         )
     finally:
