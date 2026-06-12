@@ -158,33 +158,33 @@ You MUST classify the subject into one of the categories below based on your ove
 - [sub 3] (Tier 7): Heavily flawed. Severe asymmetry, feature distortion, or lack of facial mass definition. Overall score ~2.9 or less
 
 OUTPUT FORMAT RULES:
-- Use standard Telegram Markdown formatting. 
-- Use **double asterisks** for bold text to highlight key areas as shown in the template.
-- NEVER nest double asterisks inside each other or put them back-to-back (e.g., do NOT do **:** **).
+- Use standard Telegram HTML formatting ONLY. 
+- Use <b> and </b> tags for bold text to highlight key areas as shown in the template.
+- DO NOT USE ANY ASTERISKS (*) OR MARKDOWN IN THE OUTPUT.
 - KEEP ALL EMOJIS in the template below; they must appear exactly as written.
 - Follow the template exactly:
 
-📊 **FACE ANALYSIS REPORT**
-⭐ **Overall Rating:** X.X/10
+📊 <b>FACE ANALYSIS REPORT</b>
+⭐ <b>Overall Rating:</b> X.X/10
 
-👁 **Симметрия лица:** {metrics['symmetry']}/10
-📏 **Пропорции лица:** X.X/10
-🦴 **Выраженность челюсти:** X.X/10
-👃 **Нос:** X.X/10
-👄 **Губы:** X.X/10
-👀 **Область глаз:** X.X/10
+👁 <b>Симметрия лица:</b> {metrics['symmetry']}/10
+📏 <b>Пропорции лица:</b> X.X/10
+🦴 <b>Выраженность челюсти:</b> X.X/10
+👃 <b>Нос:</b> X.X/10
+👄 <b>Губы:</b> X.X/10
+👀 <b>Область глаз:</b> X.X/10
 
-🧔 **Потенциал внешности: [Enter one classification from the SCALE: true adam, chad, htn, mtn, ltn, sub 5, or sub 3 in uppercase or brackets]**
+🧔 <b>Потенциал внешности: [Enter one classification from the SCALE: true adam, chad, htn, mtn, ltn, sub 5, or sub 3 in uppercase or brackets]</b>
 
-**Плюсы:**
+<b>Плюсы:</b>
 ✅ [State an objective geometric advantage, e.g., flawless eye symmetry or defined jawline structure]
 ✅ [State another objective geometric advantage, e.g., balanced lip proportions]
 
-**Минусы:**
+<b>Минусы:</b>
 ⚠ [Identify a specific asymmetry or suboptimal proportion in Russian, e.g., небольшая асимметрия носа]
 ⚠ [Identify a minor feature harmony issue, e.g., челюсть могла бы быть более определенной]
 
-**Рекомендации:**
+<b>Рекомендации:</b>
 • [Constructive grooming advice tailored to the weaker area, e.g., hair styling to balance a certain feature]
 • [Style or grooming advice focusing on improvement, e.g., макияж для коррекции]
 • [Style/maintenance advice, e.g., regular skincare to improve feature presentation]
