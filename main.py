@@ -186,7 +186,14 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
     user_id = message.from_user.id
     username = message.from_user.username or "unknown"
     
-    waiting_msg = await message.answer("🔄 **Инициализация процесса...**\n1. Проверяем наличие лица.\n2. Находим ключевые точки лица.\n3. Анализируем пропорции.\n\n*Пожалуйста, подождите.*")
+    waiting_msg = await message.answer(
+    "🔄 <b>Инициализация процесса...</b>\n"
+    "1. Проверяем наличие лица.\n"
+    "2. Находим ключевые точки лица.\n"
+    "3. Анализируем пропорции.\n\n"
+    "<i>Пожалуйста, подождите.</i>",
+    parse_mode="HTML"
+    )
     
     photo = message.photo[-1]
     temp_image_path = f"scan_{user_id}_{photo.file_id[:10]}.jpg"
@@ -219,7 +226,7 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
 
         await bot.delete_message(chat_id=message.chat.id, message_id=waiting_msg.message_id)
         
-        await message.reply(report)
+        await message.reply(report, parse_mode="HTML")
         await state.clear()
 
     except Exception as e:
@@ -240,8 +247,9 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
 @dp.message(AnalyzerStates.waiting_for_photo)
 async def handle_invalid_input_type(message: Message):
     await message.reply(
-        "⚠️ **Некорректный формат данных**\n\nСистема ожичает прямую передачу графического файла (изображения/фотографии).\nПожалуйста, пришлите снимок лица или нажмите кнопку возврата ниже.",
-        reply_markup=get_back_btn()
+        "⚠️ Некорректный формат данных\n\n"
+        "Система ожидает прямую передачу графического файла (изображения/фотографии).\n"
+        "Пожалуйста, просто пришлите снимок лица в чат."
     )
 
 # --- МОНИТОРИНГ И СИСТЕМНЫЕ КЛИЕНТЫ ---
