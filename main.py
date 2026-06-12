@@ -206,7 +206,7 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
 
 # ЛОГИКА ТАБЛИЦЫ ЛИДЕРОВ И СТРИКОВ
         milestone_text = ""
-        if supabase:
+        if score >= 6.0 and supabase:
             try:
                 user_check = supabase.table("leaderboard").select("*").eq("user_id", user_id).execute()
                 
