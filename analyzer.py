@@ -99,22 +99,41 @@ def calculate_face_metrics(image_path):
     face_height = abs(chin.y - forehead.y)
     face_ratio = face_height / face_width
 
-    # СТРОГАЯ ДВУХОСЕВАЯ МАТЕМАТИКА СИММЕТРИИ
-    # 1. Вертикальная асимметрия (сдвиг носа по оси X)
+    # УЛЬТРА-СТРОГАЯ ПРОВЕРКА СИММЕТРИИ ПО ВСЕМУ ЛИЦУ (16 точек)
+    pairs = [
+        (33, 263),   # Внешние углы глаз
+        (133, 362),  # Внутренние углы глаз
+        (70, 300),   # Внешние края бровей
+        (107, 336),  # Внутренние края бровей
+        (61, 291),   # Углы губ
+        (323, 93),   # Края скул
+        (172, 397),  # Углы челюсти
+        (78, 308)    # Внешний контур губ
+    ]
+
+    total_deviation = 0.0
     eye_center_x = (left_eye.x + right_eye.x) / 2
-    deviation_x = abs(nose.x - eye_center_x)
-    error_x = (deviation_x / face_width) * 4.0  # Увеличили строгость до 4.0
 
-    # 2. Горизонтальная асимметрия (наклон глаз по оси Y)
-    # В идеале оба глаза должны быть на одной высоте (разница y равна 0)
-    deviation_y = abs(right_eye.y - left_eye.y)
-    error_y = (deviation_y / face_width) * 4.0  # Штраф за разницу по высоте
+    for p1, p2 in pairs:
+        pt1 = landmarks[p1]
+        pt2 = landmarks[p2]
+        
+        # 1. Проверяем разницу по горизонтали (X) относительно центра лица
+        dist_to_center_l = abs(pt1.x - eye_center_x)
+        dist_to_center_r = abs(pt2.x - eye_center_x)
+        total_deviation += abs(dist_to_center_l - dist_to_center_r)
+        
+        # 2. Проверяем перекос по вертикали (Y) между парными точками
+        total_deviation += abs(pt1.y - pt2.y)
 
-    # 3. Суммируем ошибки
-    total_error = error_x + error_y
+    # Проверяем центровку носа отдельно
+    total_deviation += abs(nose.x - eye_center_x) * 2
+
+    # Считаем ошибку и масштабируем (коэффициент 7.5 делает тест супер-чувствительным)
+    error_factor = (total_deviation / face_width) * 7.5
     
-    # 4. Переводим в 10-балльную шкалу
-    symmetry = max(0.0, min(10.0, (1.0 - total_error) * 10))
+    # Итоговый балл
+    symmetry = max(0.0, min(10.0, (1.0 - error_factor) * 10))
 
     # Расчет яркости
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
