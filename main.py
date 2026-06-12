@@ -208,19 +208,29 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
         milestone_text = ""
         if score >= 6.0 and supabase:
             try:
+                # Получаем уникальный ID текущей фотографии
+                current_photo_id = photo.file_id
+                
                 user_check = supabase.table("leaderboard").select("*").eq("user_id", user_id).execute()
                 
                 if user_check.data:
                     current_record = user_check.data[0]
                     old_max = current_record.get("max_score", 0.0)
                     old_streak = current_record.get("streak", 1)
+                    last_photo_id = current_record.get("last_photo_id", "")
                     
-                    if score > old_max:
-                        # Побит личный рекорд — обновляем балл, сбрасываем стрик в 1
+                    # ЗАЩИТА ОТ АБУЗА: проверяем, не совпадает ли фото с прошлым разом
+                    if last_photo_id == current_photo_id:
+                        logger.info(f"User {user_id} tried to abuse streak with the same photo.")
+                        milestone_text = "⚠️ <b>Стрик не засчитан!</b>\nВы отправили ту же самую фотографию. Чтобы прокачать стрик, сделайте новое селфи!"
+                    
+                    elif score > old_max:
+                        # Побит личный рекорд — обновляем балл, сбрасываем стрик в 1, пишем ID фото
                         supabase.table("leaderboard").update({
                             "username": username,
                             "max_score": score,
                             "streak": 1,
+                            "last_photo_id": current_photo_id,
                             "updated_at": datetime.now().isoformat()
                         }).eq("user_id", user_id).execute()
                         logger.info(f"New personal record for {user_id}: {score}")
@@ -228,27 +238,29 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
                         milestone_text = f"👑 <b>Новый личный рекорд!</b>\nВы жестко могнули свой старый результат в {old_max}/10 и подняли планку до <b>{score}/10</b>! Ваша позиция в таблице лидеров обновлена."
                         
                     elif abs(score - old_max) <= 0.3:
-                        # Результат удержан в пределах погрешности — качаем стрик!
+                        # Результат удержан в пределах погрешности новой фоткой — качаем стрик!
                         new_streak = old_streak + 1
                         supabase.table("leaderboard").update({
                             "username": username,
                             "streak": new_streak,
+                            "last_photo_id": current_photo_id,
                             "updated_at": datetime.now().isoformat()
                         }).eq("user_id", user_id).execute()
                         logger.info(f"User {user_id} maintained score. Streak grew to {new_streak}")
                         
                         milestone_text = f"🔥 <b>Стрик удержан! х{new_streak}</b>\nВы успешно подтвердили свой высокий уровень привлекательности (Score: {score}/10). Продолжайте в том же духе!"
                 else:
-                    # Новый игрок врывается в топ
+                    # Новый игрок врывается в топ — сохраняем и его первую фотку
                     supabase.table("leaderboard").insert({
                         "user_id": user_id,
                         "username": username,
                         "max_score": score,
-                        "streak": 1
+                        "streak": 1,
+                        "last_photo_id": current_photo_id
                     }).execute()
                     logger.info(f"New user {user_id} added to leaderboard with score {score}")
                     
-                    milestone_text = f"🏆 <b>Добро пожаловать в Таблицу моггеров!</b>\nВаш результат <b>{score}/10</b> достаточно хорош, поэтому мы внесли вас в глобальный рейтинг бота. Нажмите кнопку «🏆 Таблица моггеров», чтобы проверить свое место!"
+                    milestone_text = f"🏆 <b>Добро пожаловать в Таблицу моггеров!</b>\nВаш результат <b>{score}/10</b> достаточно хорош, поэтому мы внесли вас в global рейтинг бота. Нажмите кнопку «🏆 Таблица моггеров», чтобы проверить свое место!"
                     
             except Exception as db_err:
                 logger.error(f"Failed to record statistics in Supabase: {db_err}")
