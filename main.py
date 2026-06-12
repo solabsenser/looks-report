@@ -335,7 +335,15 @@ async def start_health_server() -> web.AppRunner | None:
 
 async def main():
     logger.info("Initializing polling engine with analyzer backend: %s", ANALYZER_BACKEND)
-    logger.info("Initializing polling engine...")
+    
+    # --- НАСТРОЙКА КНОПКИ МЕНЮ ДЛЯ ПОЛЬЗОВАТЕЛЕЙ ---
+    commands = [
+        BotCommand(command="start", description="Обновить / Перезапустить бота 🔄")
+    ]
+    # Регистрируем только одну команду, чтобы всё выглядело чисто
+    await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
+    logger.info("Bot command menu configured successfully.")
+    
     health_runner = await start_health_server()
 
     try:
