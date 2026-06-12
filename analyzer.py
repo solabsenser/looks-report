@@ -154,6 +154,7 @@ Face Ratio: {metrics['face_ratio']}
 OUTPUT FORMAT RULES:
 - Output MUST be plain text ONLY.
 - DO NOT USE ANY MARKDOWN OR BOLD (No asterisks *, no double asterisks **, no backticks `, no code blocks).
+- KEEP ALL EMOJIS: Do not delete, skip, or change any emojis in the headers of the template below. They must appear exactly as written.
 - Follow the template exactly:
 
 📊 FACE ANALYSIS REPORT
