@@ -163,27 +163,27 @@ OUTPUT FORMAT RULES:
 - KEEP ALL EMOJIS in the template below; they must appear exactly as written.
 - Follow the template exactly:
 
-📊 FACE ANALYSIS REPORT
-⭐ Overall Rating: X.X/10 (Calculate a fair average based on overall feature harmony and standard benchmarks)
+📊 **FACE ANALYSIS REPORT**
+⭐ **Overall Rating:** X.X/10
 
-👁 Симметрия лица: {metrics['symmetry']}/10 (Use this exact number strictly)
-📏 Пропорции лица: X.X/10
-🦴 Выраженность челюсти: X.X/10
-👃 Нос: X.X/10
-👄 Губы: X.X/10
-👀 Область глаз: X.X/10
+👁 **Симметрия лица:** {metrics['symmetry']}/10
+📏 **Пропорции лица:** X.X/10
+🦴 **Выраженность челюсти:** X.X/10
+👃 **Нос:** X.X/10
+👄 **Губы:** X.X/10
+👀 **Область глаз:** X.X/10
 
 🧔 **Потенциал внешности:** **[Enter one classification from the SCALE: true adam, chad, htn, mtn, ltn, sub 5, or sub 3 in uppercase or brackets]**
 
-Плюсы:
+**Плюсы:**
 ✅ [State an objective geometric advantage, e.g., flawless eye symmetry or defined jawline structure]
 ✅ [State another objective geometric advantage, e.g., balanced lip proportions]
 
-Минусы:
+**Минусы:**
 ⚠ [Identify a specific asymmetry or suboptimal proportion in Russian, e.g., небольшая асимметрия носа]
 ⚠ [Identify a minor feature harmony issue, e.g., челюсть могла бы быть более определенной]
 
-Рекомендации:
+**Рекомендации:**
 • [Constructive grooming advice tailored to the weaker area, e.g., hair styling to balance a certain feature]
 • [Style or grooming advice focusing on improvement, e.g., макияж для коррекции]
 • [Style/maintenance advice, e.g., regular skincare to improve feature presentation]
