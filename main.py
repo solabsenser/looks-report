@@ -221,7 +221,7 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
                             "username": username,
                             "max_score": score,
                             "streak": 1,
-                            "updated_at": datetime.utcnow().isoformat()
+                            "updated_at": datetime.now().isoformat()
                         }).eq("user_id", user_id).execute()
                         logger.info(f"New personal record for {user_id}: {score}")
                         
@@ -233,7 +233,7 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
                         supabase.table("leaderboard").update({
                             "username": username,
                             "streak": new_streak,
-                            "updated_at": datetime.utcnow().isoformat()
+                            "updated_at": datetime.now().isoformat()
                         }).eq("user_id", user_id).execute()
                         logger.info(f"User {user_id} maintained score. Streak grew to {new_streak}")
                         
