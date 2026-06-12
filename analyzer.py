@@ -158,8 +158,8 @@ You MUST classify the subject into one of the categories below based on your ove
 - [sub 3] (Tier 7): Heavily flawed. Severe asymmetry, feature distortion, or lack of facial mass definition. Overall score ~2.9 or less
 
 OUTPUT FORMAT RULES:
-- Output MUST be plain text ONLY.
-- DO NOT USE ANY MARKDOWN OR BOLD (No asterisks *, no double asterisks **, no backticks `, no code blocks).
+- Use standard Telegram Markdown formatting. 
+- Use **double asterisks** for bold text to highlight key areas as shown in the template.
 - KEEP ALL EMOJIS in the template below; they must appear exactly as written.
 - Follow the template exactly:
 
@@ -173,7 +173,7 @@ OUTPUT FORMAT RULES:
 👄 Губы: X.X/10
 👀 Область глаз: X.X/10
 
-🧔 Потенциал внешности: [Enter one classification from the SCALE: true adam, chad, htn, mtn, ltn, sub 5, or sub 3]
+🧔 **Потенциал внешности:** **[Enter one classification from the SCALE: true adam, chad, htn, mtn, ltn, sub 5, or sub 3 in uppercase or brackets]**
 
 Плюсы:
 ✅ [State an objective geometric advantage, e.g., flawless eye symmetry or defined jawline structure]
