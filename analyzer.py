@@ -9,12 +9,13 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-import google.generativeai as genai
+# Меняем импорт с Google на Groq
+from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 FACE_LANDMARKER_MODEL_URL = (
     "https://storage.googleapis.com/mediapipe-models/face_landmarker/"
     "face_landmarker/float16/latest/face_landmarker.task"
@@ -23,12 +24,13 @@ FACE_LANDMARKER_MODEL_PATH = Path(
     os.getenv("FACE_LANDMARKER_MODEL_PATH", "models/face_landmarker.task")
 )
 MODEL_DOWNLOAD_LOCK = Lock()
-ANALYZER_BACKEND = "mediapipe-tasks-face-landmarker-v2"
+ANALYZER_BACKEND = "mediapipe-tasks-face-landmarker-v2 + Groq Llama3"
 
-if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY not found in .env")
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY not found in .env")
 
-genai.configure(api_key=GEMINI_API_KEY)
+# Инициализируем клиент Groq
+groq_client = Groq(api_key=GROQ_API_KEY)
 
 
 def ensure_face_landmarker_model():
@@ -51,10 +53,6 @@ def detect_face_landmarks(rgb_image):
     model_path = ensure_face_landmarker_model()
 
     options = vision.FaceLandmarkerOptions(
-        # Force the CPU delegate so MediaPipe does not try to initialize GPU
-        # acceleration in headless servers where OpenGL ES libraries are often
-        # unavailable. The system package for libGLESv2 is still listed in the
-        # deploy files because the MediaPipe wheel can dynamically link to it.
         base_options=python.BaseOptions(
             model_asset_path=str(model_path),
             delegate=python.BaseOptions.Delegate.CPU,
@@ -118,21 +116,15 @@ def calculate_face_metrics(image_path):
         pt1 = landmarks[p1]
         pt2 = landmarks[p2]
         
-        # 1. Проверяем разницу по горизонтали (X) относительно центра лица
         dist_to_center_l = abs(pt1.x - eye_center_x)
         dist_to_center_r = abs(pt2.x - eye_center_x)
         total_deviation += abs(dist_to_center_l - dist_to_center_r)
-        
-        # 2. Проверяем перекос по вертикали (Y) между парными точками
         total_deviation += abs(pt1.y - pt2.y)
 
-    # Проверяем центровку носа отдельно
     total_deviation += abs(nose.x - eye_center_x) * 2
 
-    # Считаем ошибку и масштабируем (коэффициент 1.2 — идеальный баланс, чтобы не было нулей)
+    # Сбалансированный коэффициент 1.2
     error_factor = (total_deviation / face_width) * 1.2
-    
-    # Итоговый балл (теперь он будет адекватным и реалистичным)
     symmetry = max(0.0, min(10.0, (1.0 - error_factor) * 10))
 
     # Расчет яркости
@@ -144,6 +136,7 @@ def calculate_face_metrics(image_path):
         "symmetry": round(symmetry, 1),
         "brightness": round(brightness, 1)
     }
+
 
 def build_prompt(metrics):
     return f"""
@@ -197,13 +190,11 @@ def extract_score(report):
         r"Overall Rating:\s*(\d+(?:\.\d+)?)",
         report
     )
-
     if match:
         try:
             return float(match.group(1))
         except Exception:
             return 0.0
-
     return 0.0
 
 
@@ -224,16 +215,16 @@ def analyze_face(image_path):
                 )
             }
 
-        model = genai.GenerativeModel(
-            "gemini-2.5-flash"
+        # Вызов Groq API вместо Gemini
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "user", "content": build_prompt(metrics)}
+            ],
+            temperature=0.3  # Чуть ниже температуру, чтобы строго следовала шаблону
         )
 
-        response = model.generate_content(
-            build_prompt(metrics)
-        )
-
-        report = response.text.strip()
-
+        report = response.choices[0].message.content.strip()
         score = extract_score(report)
 
         return {
@@ -253,9 +244,5 @@ def analyze_face(image_path):
 
 if __name__ == "__main__":
     result = analyze_face("photo.jpg")
-
-    print("SCORE:")
-    print(result["score"])
-
-    print("\nREPORT:")
-    print(result["report"])
+    print("SCORE:", result["score"])
+    print("\nREPORT:\n", result["report"])
