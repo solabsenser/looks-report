@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 from threading import Lock
 from urllib.request import urlretrieve
+import math
 
 import cv2
 import mediapipe as mp
@@ -109,19 +110,40 @@ def calculate_face_metrics(image_path):
         (78, 308)    # Внешний контур губ
     ]
 
-    total_deviation = 0.0
-    eye_center_x = (left_eye.x + right_eye.x) / 2
+    # Высчитываем угол наклона головы по линии глаз
+    dy = right_eye.y - left_eye.y
+    dx = right_eye.x - left_eye.x
+    angle = math.atan2(dy, dx)
+    
+    cos_a = math.cos(-angle)
+    sin_a = math.sin(-angle)
 
+    total_deviation = 0.0
+    
+    # Центр вращения — точка ровно между глазами
+    cx = (left_eye.x + right_eye.x) / 2
+    cy = (left_eye.y + right_eye.y) / 2
+
+    # Проходим по парам точек, виртуально выравнивая их под один горизонт
     for p1, p2 in pairs:
         pt1 = landmarks[p1]
         pt2 = landmarks[p2]
         
-        dist_to_center_l = abs(pt1.x - eye_center_x)
-        dist_to_center_r = abs(pt2.x - eye_center_x)
-        total_deviation += abs(dist_to_center_l - dist_to_center_r)
-        total_deviation += abs(pt1.y - pt2.y)
+        # Поворачиваем левую точку вокруг виртуального центра
+        x1_opt = cos_a * (pt1.x - cx) - sin_a * (pt1.y - cy)
+        y1_opt = sin_a * (pt1.x - cx) + cos_a * (pt1.y - cy)
+        
+        # Поворачиваем правую точку вокруг виртуального центра
+        x2_opt = cos_a * (pt2.x - cx) - sin_a * (pt2.y - cy)
+        y2_opt = sin_a * (pt2.x - cx) + cos_a * (pt2.y - cy)
+        
+        # Сравниваем координаты после выравнивания
+        total_deviation += abs(abs(x1_opt) - abs(x2_opt))
+        total_deviation += abs(y1_opt - y2_opt)
 
-    total_deviation += abs(nose.x - eye_center_x) * 2
+    # Проверяем положение кончика носа в повернутых координатах
+    nose_x_opt = cos_a * (nose.x - cx) - sin_a * (nose.y - cy)
+    total_deviation += abs(nose_x_opt) * 2
 
     # Сбалансированный коэффициент 1.2
     error_factor = (total_deviation / face_width) * 1.2
