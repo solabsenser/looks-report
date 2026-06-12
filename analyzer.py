@@ -138,14 +138,14 @@ def calculate_face_metrics(image_path):
         y1_opt = sin_a * (pt1_x - cx) + cos_a * (pt1_y - cy)
         
         # Поворачиваем правую точку
-        x2_opt = cos_a * (pt2_x - cx) - sin_a * (pt2.y - cy)
+        x2_opt = cos_a * (pt2_x - cx) - sin_a * (pt2_y - cy)
         y2_opt = sin_a * (pt2_x - cx) + cos_a * (pt2.y - cy)
         
         # Сравниваем пиксельные отклонения
         total_deviation += abs(abs(x1_opt) - abs(x2_opt))
         total_deviation += abs(y1_opt - y2_opt)
 
-    # Проверяем положение кончика носа (исправлено на nose_x и nose_y)
+    # Проверяем положение кончика носа в повернутых координатах
     nose_x_opt = cos_a * (nose_x - cx) - sin_a * (nose_y - cy)
     total_deviation += abs(nose_x_opt) * 2
 
