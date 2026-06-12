@@ -211,9 +211,11 @@ The entire report MUST be written strictly in professional Russian language. Avo
 
 
 def extract_score(report):
+    # Ищем любую конструкцию вокруг "Overall Rating" или "Rating", игнорируя HTML-теги и текст в скобках
     match = re.search(
-        r"Overall Rating:\s*(\d+(?:\.\d+)?)",
-        report
+        r"Overall\s+Rating.*?(?:Appeal)?.*?:?\s*.*?(\d+(?:\.\d+)?)", 
+        report, 
+        re.IGNORECASE
     )
     if match:
         try:
