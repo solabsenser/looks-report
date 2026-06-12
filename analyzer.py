@@ -117,25 +117,24 @@ def calculate_face_metrics(image_path):
 
 def build_prompt(metrics):
     return f"""
-You are a critical aesthetic consultant and facial analysis expert. 
-Your task is to provide a realistic, objective, and honest analysis based on the calculated geometric data.
+You are an objective AI Facial Aesthetics Analyst. Your goal is to evaluate each facial feature independently, honestly, and without bias.
 
-CRITICAL RULES:
-1. DO NOT FLATTER. Do not inflate scores out of politeness. Be honest and balanced.
-2. Use the standard distribution for scores: an average, normal face with typical minor asymmetries must fall strictly in the 5.0 - 6.0 range. 
-3. Scores above 7.0 must be strictly justified by excellent symmetry and near-ideal proportions.
-4. The output must be concise and straightforward. Do not include introductory or concluding remarks.
+CRITICAL EVALUATION RULES:
+1. INDEPENDENT ASSESSMENT: Evaluate each sub-score (Челюсть, Нос, Губы, Глаза) completely independently. A person can have exceptional, high-tier eyes (7.5+) but a weaker jawline (4.5). Do not artificially average the scores. Let strong features shine and weak features be rated lower.
+2. NO EXTREMES WITHOUT REASON: Do not drop sub-scores below 4.0 unless there is a severe, highly noticeable flaw or heavy distortion in that specific area. Do not inflate scores above 7.5 unless the feature is exceptionally harmonious.
+3. RATIONAL PROPORTIONS: Evaluate the "Пропорции лица" line rationally based on the Face Ratio ({metrics['face_ratio']}). A perfect golden ratio is ~1.618. Realistic variations within the 1.3 - 1.8 range are common and should be scored naturally (around 5.0 - 6.5), not penalized brutally.
 
-Measurements to evaluate:
-Symmetry Score: {metrics['symmetry']}/10 (Use this directly as a baseline for the symmetry line)
-Face Ratio: {metrics['face_ratio']} (Ideal is ~1.618 golden ratio. Deviations should lower the proportion score)
-Brightness: {metrics['brightness']}
+Measurements to include:
+Symmetry Score: {metrics['symmetry']}/10 (Use this exact number strictly for the "Симметрия лица" line)
+Face Ratio: {metrics['face_ratio']}
 
-Format the output strictly as plain text matching the lines below. 
-DO NOT USE ANY MARKDOWN (no asterisks, no bold text, no code blocks like ` or **).
+OUTPUT FORMAT RULES:
+- Output MUST be plain text ONLY.
+- DO NOT USE ANY MARKDOWN OR BOLD (No asterisks *, no double asterisks **, no backticks `, no code blocks).
+- Follow the template exactly:
 
 📊 FACE ANALYSIS REPORT
-⭐ Overall Rating: X.X/10
+⭐ Overall Rating: X.X/10 (Calculate a fair, realistic average based on the harmony of all features)
 
 👁 Симметрия лица: {metrics['symmetry']}/10
 📏 Пропорции лица: X.X/10
@@ -147,19 +146,19 @@ DO NOT USE ANY MARKDOWN (no asterisks, no bold text, no code blocks like ` or **
 🧔 Потенциал внешности: Низкий / Средний / Высокий
 
 Плюсы:
-✅ [Specific objective advantage based on metrics or photo]
-✅ [Specific objective advantage]
+✅ [Objective advantage of their strongest feature]
+✅ [Another objective geometric advantage]
 
 Минусы:
-⚠ [Real critique or area of improvement]
-⚠ [Real critique or area of improvement]
+⚠ [Realistic area of improvement or weaker feature]
+⚠ [Another realistic minor flaw or asymmetry]
 
 Рекомендации:
-• [Constructive style/grooming advice to improve appearance]
-• [Style/grooming advice]
-• [Style/grooming advice]
+• [Constructive grooming/style/hair advice targeting the weaker areas]
+• [Style or grooming advice]
+• [Style or grooming advice]
 
-Ensure the report remains professional and constructive in Russian, but strictly uncompromising and critical.
+The report must be written in professional Russian, maintaining a realistic, balanced, and fair tone.
 """
 
 
