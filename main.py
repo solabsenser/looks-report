@@ -53,20 +53,27 @@ else:
 class AnalyzerStates(StatesGroup):
     waiting_for_photo = State()
 
+
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+
 # --- КЛАВИАТУРЫ ---
 
-def get_main_menu() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="📸 Оценить фото", callback_data="menu_rate")],
-            [InlineKeyboardButton(text="📊 История", callback_data="menu_history"), InlineKeyboardButton(text="❓ Как работает", callback_data="menu_how_it_works")],
-            [InlineKeyboardButton(text="⭐ Premium", callback_data="menu_premium")]
-        ]
-    )
-
-def get_back_btn(target: str = "main_menu") -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="⬅️ Назад в меню", callback_data=target)]]
+def get_main_keyboard() -> ReplyKeyboardMarkup:
+    builder = ReplyKeyboardBuilder()
+    
+    # Создаем 4 главные текстовые кнопки
+    builder.button(text="📊 Анализ лица")
+    builder.button(text="🏆 Таблица моггеров")
+    builder.button(text="💎 Премиум")
+    builder.button(text="📜 История")
+    
+    # Выстраиваем их сеткой 2х2
+    builder.adjust(2)
+    
+    return builder.as_markup(
+        resize_keyboard=True,
+        input_field_placeholder="Выберите нужный раздел..."
     )
 
 # --- ХЭНДЛЕРЫ ---
@@ -77,72 +84,70 @@ async def cmd_start(message: Message, state: FSMContext):
     logger.info(f"User {message.from_user.id} started the bot.")
     
     welcome_text = (
-        "🤖 **Добро пожаловать в Face Analyzer AI!**\n\n"
+        "🤖 Добро пожаловать в Face Analyzer AI!\n\n"
         "Я помогу провести глубокий компьютерный анализ пропорций и симметрии твоего лица при помощи MediaPipe и ИИ.\n\n"
-        "Выберите интересующий пункт меню ниже:"
+        "Выберите интересующий пункт меню на клавиатуре ниже"
     )
-    await message.answer(welcome_text, reply_markup=get_main_menu(), parse_mode="Markdown")
+    # Отправляем меню с нашей новой Reply-клавиатурой (без parse_mode, чистый текст)
+    await message.answer(welcome_text, reply_markup=get_main_keyboard())
 
-@dp.callback_query(F.data == "main_menu")
-async def back_to_main_menu(callback: CallbackQuery, state: FSMContext):
+
+@dp.message(F.text == "📊 Анализ лица")
+async def process_rate_photo(message: Message, state: FSMContext):
     await state.clear()
-    await callback.answer()
-    welcome_text = (
-        "🤖 **Главное меню Face Analyzer AI**\n\n"
-        "Выберите действие:"
-    )
-    try:
-        await callback.message.edit_text(welcome_text, reply_markup=get_main_menu(), parse_mode="Markdown")
-    except Exception:
-        await callback.message.answer(welcome_text, reply_markup=get_main_menu(), parse_mode="Markdown")
-
-@dp.callback_query(F.data == "menu_how_it_works")
-async def process_how_it_works(callback: CallbackQuery):
-    await callback.answer()
-    info_text = (
-        "❓ **Как устроен анализ лица?**\n\n"
-        "1️⃣ Вы отправляете снимок в систему.\n"
-        "2️⃣ Алгоритм **MediaPipe Face Landmarker** разворачивает сетку из сотен ключевых точек.\n"
-        "3️⃣ Программа вычисляет индекс симметрии и соотношение сторон (вертикаль/горизонталь).\n"
-        "4️⃣ Нейросеть **Gemini 2.5 Flash** агрегирует данные и пишет развернутые рекомендации."
-    )
-    await callback.message.edit_text(info_text, reply_markup=get_back_btn(), parse_mode="Markdown")
-
-@dp.callback_query(F.data == "menu_premium")
-async def process_premium(callback: CallbackQuery):
-    await callback.answer()
-    premium_text = (
-        "⭐ **Face Analyzer Premium**\n\n"
-        "Откройте расширенные возможности ИИ аналитики:\n"
-        "• Отсутствие лимитов на загрузку фото.\n"
-        "• Определение фенотипа и этнических черт лица.\n"
-        "• Персональный ИИ-стилист по подбору причесок и очков.\n\n"
-        "*Функция Premium интеграции находится в разработке.*"
-    )
-    await callback.message.edit_text(premium_text, reply_markup=get_back_btn(), parse_mode="Markdown")
-
-@dp.callback_query(F.data == "menu_rate")
-async def process_rate_photo(callback: CallbackQuery, state: FSMContext):
-    await callback.answer()
     await state.set_state(AnalyzerStates.waiting_for_photo)
     
     instruction_text = (
-        "📸 **Отправьте фотографию лица**\n\n"
-        "⚠️ **Требования к снимку для точной работы ИИ:**\n"
+        "📸 Отправьте фотографию лица\n\n"
+        "⚠️ Требования к снимку для точной работы ИИ:\n"
         "• Лицо смотрит строго прямо (анфас)\n"
         "• Хорошее, равномерное освещение\n"
         "• Без медицинских масок и солнцезащитных очков\n"
-        "• На фотографии должен быть строго **один человек**"
+        "• На фотографии должен быть строго один человек\n\n"
+        "Просто пришлите фото в чат..."
     )
-    await callback.message.edit_text(instruction_text, reply_markup=get_back_btn(), parse_mode="Markdown")
+    await message.answer(instruction_text)
 
-@dp.callback_query(F.data == "menu_history")
-async def process_history(callback: CallbackQuery):
-    await callback.answer()
-    user_id = callback.from_user.id
+
+@dp.message(F.text == "🏆 Таблица моггеров")
+async def process_leaderboard(message: Message, state: FSMContext):
+    await state.clear()
+    
+    # Твоя будущая таблица лидеров, пока что красивый статичный топ
+    leaderboard_text = (
+        "🏆 ТОП-5 МОГГЕРОВ БОТА\n\n"
+        "1. 👑 Султан — 8.1/10 (Симметрия: 8.9)\n"
+        "2. ⚡ Шахзод — 7.8/10 (Симметрия: 8.4)\n"
+        "3. 🧊 Даврон — 7.5/10 (Симметрия: 7.9)\n"
+        "4. 👾 Алекс — 7.2/10 (Симметрия: 7.5)\n"
+        "5. ☄️ Рустам — 7.0/10 (Симметрия: 7.2)\n\n"
+        "Хотите попасть в таблицу? Пройдите анализ лица с идеальным освещением!"
+    )
+    await message.answer(leaderboard_text)
+
+
+@dp.message(F.text == "💎 Премиум")
+async def process_premium(message: Message, state: FSMContext):
+    await state.clear()
+    
+    premium_text = (
+        "💎 Face Analyzer Premium\n\n"
+        "Откройте расширенные возможности ИИ аналитики:\n"
+        "• Отсутствие лимитов на загрузку фото.\n"
+        "• Подробный расчет Hunter Eyes и углов челюсти.\n"
+        "• Персональный ИИ-стилист по подбору причесок.\n\n"
+        "Функция Premium интеграции находится в разработке (скоро через Telegram Stars)."
+    )
+    await message.answer(premium_text)
+
+
+@dp.message(F.text == "📜 История")
+async def process_history(message: Message, state: FSMContext):
+    await state.clear()
+    user_id = message.from_user.id
     
     if not supabase:
-        await callback.message.edit_text("⚠️ Система хранения истории отключена или недоступна.", reply_markup=get_back_btn())
+        await message.answer("⚠️ Система хранения истории отключена или недоступна.")
         return
 
     try:
@@ -156,25 +161,23 @@ async def process_history(callback: CallbackQuery):
         )
         
         if not response.data:
-            await callback.message.edit_text(
-                "📜 **Ваша история пуста**\n\nВы еще не сканировали фотографии в нашем боте.",
-                reply_markup=get_back_btn(),
-                parse_mode="Markdown"
+            await message.answer(
+                "📜 Ваша история пуста\n\nВы еще не сканировали фотографии в нашем боте."
             )
             return
             
-        history_text = "📜 **Ваши последние 5 сканирований:**\n\n"
+        history_text = "📜 Ваши последние 5 сканирований:\n\n"
         for idx, row in enumerate(response.data, 1):
             raw_date = row.get('created_at', '-----')
             formatted_date = raw_date[:10] if len(raw_date) >= 10 else raw_date
             score = row.get('score', 0.0)
-            history_text += f"{idx}. **Оценка: ⭐ {score}/10** | Дата: `{formatted_date}`\n"
+            history_text += f"{idx}. Оценка: ⭐ {score}/10 | Дата: {formatted_date}\n"
             
-        await callback.message.edit_text(history_text, reply_markup=get_back_btn(), parse_mode="Markdown")
+        await message.answer(history_text)
         
     except Exception as e:
         logger.error(f"Error querying history from Supabase for user {user_id}: {e}")
-        await callback.message.edit_text("❌ Произошла техническая ошибка при чтении истории.", reply_markup=get_back_btn())
+        await message.answer("❌ Произошла техническая ошибка при чтении истории.")
 
 # --- ОБРАБОТКА ФОТО (FSM СЦЕНАРИЙ) ---
 
