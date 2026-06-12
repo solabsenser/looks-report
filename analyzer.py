@@ -182,7 +182,7 @@ OUTPUT FORMAT RULES:
 • [Style or grooming advice]
 • [Style or grooming advice]
 
-The report must be written in professional Russian, maintaining a realistic, balanced, and fair tone.
+The entire report MUST be written strictly in professional Russian language ONLY. Avoid mixing English words (like "slightly") into the Russian text. Maintain a realistic, balanced, and fair tone.
 """
 
 
