@@ -205,6 +205,7 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
         report = result.get("report", "⚠️ Отчет пуст.")
 
 # ЛОГИКА ТАБЛИЦЫ ЛИДЕРОВ И СТРИКОВ
+        milestone_text = ""
         if score >= 6.0 and supabase:
             try:
                 user_check = supabase.table("leaderboard").select("*").eq("user_id", user_id).execute()
@@ -224,6 +225,8 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
                         }).eq("user_id", user_id).execute()
                         logger.info(f"New personal record for {user_id}: {score}")
                         
+                        milestone_text = f"👑 <b>Новый личный рекорд!</b>\nВы жестко могнули свой старый результат в {old_max}/10 и подняли планку до <b>{score}/10</b>! Ваша позиция в таблице лидеров обновлена."
+                        
                     elif abs(score - old_max) <= 0.3:
                         # Результат удержан в пределах погрешности — качаем стрик!
                         new_streak = old_streak + 1
@@ -233,6 +236,8 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
                             "updated_at": datetime.utcnow().isoformat()
                         }).eq("user_id", user_id).execute()
                         logger.info(f"User {user_id} maintained score. Streak grew to {new_streak}")
+                        
+                        milestone_text = f"🔥 <b>Стрик удержан! х{new_streak}</b>\nВы успешно подтвердили свой высокий уровень привлекательности (Score: {score}/10). Продолжайте в том же духе!"
                 else:
                     # Новый игрок врывается в топ
                     supabase.table("leaderboard").insert({
@@ -243,8 +248,21 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
                     }).execute()
                     logger.info(f"New user {user_id} added to leaderboard with score {score}")
                     
+                    milestone_text = f"🏆 <b>Добро пожаловать в Таблицу моггеров!</b>\nВаш результат <b>{score}/10</b> достаточно хорош, поэтому мы внесли вас в глобальный рейтинг бота. Нажмите кнопку «🏆 Таблица моггеров», чтобы проверить свое место!"
+                    
             except Exception as db_err:
                 logger.error(f"Failed to record statistics in Supabase: {db_err}")
+
+        # Удаляем сообщение с анимацией загрузки и присылаем готовый HTML-отчет
+        await bot.delete_message(chat_id=message.chat.id, message_id=waiting_msg.message_id)
+        await message.reply(report, parse_mode="HTML")
+        
+        # Если юзер достиг какого-то достижения в таблице лидеров — пушим уведомление
+        if milestone_text:
+            await asyncio.sleep(1)  # Небольшая пауза, чтобы сообщения не слипались
+            await message.answer(milestone_text, parse_mode="HTML")
+            
+        await state.clear()
 
         await bot.delete_message(chat_id=message.chat.id, message_id=waiting_msg.message_id)
         
