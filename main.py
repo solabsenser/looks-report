@@ -62,14 +62,13 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 def get_main_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
     
-    # Создаем 4 главные текстовые кнопки
+    # Создаем 3 главные текстовые кнопки (убрали Историю)
     builder.button(text="📊 Анализ лица")
     builder.button(text="🏆 Таблица моггеров")
     builder.button(text="💎 Премиум")
-    builder.button(text="📜 История")
     
-    # Выстраиваем их сеткой 2х2
-    builder.adjust(2)
+    # Сетка: 2 кнопки в ряд, 1 снизу по центру
+    builder.adjust(2, 1)
     
     return builder.as_markup(
         resize_keyboard=True,
@@ -113,17 +112,49 @@ async def process_rate_photo(message: Message, state: FSMContext):
 async def process_leaderboard(message: Message, state: FSMContext):
     await state.clear()
     
-    # Твоя будущая таблица лидеров, пока что красивый статичный топ
-    leaderboard_text = (
-        "🏆 ТОП-5 МОГГЕРОВ БОТА\n\n"
-        "1. 👑 Султан — 8.1/10 (Симметрия: 8.9)\n"
-        "2. ⚡ Шахзод — 7.8/10 (Симметрия: 8.4)\n"
-        "3. 🧊 Даврон — 7.5/10 (Симметрия: 7.9)\n"
-        "4. 👾 Алекс — 7.2/10 (Симметрия: 7.5)\n"
-        "5. ☄️ Рустам — 7.0/10 (Симметрия: 7.2)\n\n"
-        "Хотите попасть в таблицу? Пройдите анализ лица с идеальным освещением!"
-    )
-    await message.answer(leaderboard_text)
+    if not supabase:
+        await message.answer("⚠️ Таблица моггеров временно недоступна (БД отключена).")
+        return
+
+    try:
+        # Тянем ТОП-10 пользователей по максимальному баллу
+        response = (
+            supabase.table("leaderboard")
+            .select("*")
+            .order("max_score", desc=True)
+            .limit(10)
+            .execute()
+        )
+        
+        if not response.data:
+            await message.answer(
+                "🏆 <b>Таблица моггеров пока пуста!</b>\n\nБудь первым — пройди анализ, покажи свой PSL-потенциал и займи топ!", 
+                parse_mode="HTML"
+            )
+            return
+            
+        leaderboard_text = "🏆 <b>ТОП МОГГЕРОВ БОТА</b>\n<i>Сюда попадают только лучшие результаты (Score >= 6.0)</i>\n\n"
+        medals = ["👑", "⚡", "🧊", "👾", "☄️"]
+        
+        for idx, row in enumerate(response.data, 1):
+            username = row.get('username') or "Аноним"
+            if username != "Аноним" and not username.startswith("@") and not username.startswith("id"):
+                username = f"@{username}"
+                
+            score = row.get('max_score', 0.0)
+            streak = row.get('streak', 1)
+            
+            icon = medals[idx-1] if idx <= len(medals) else "🔹"
+            streak_text = f" | 🔥 Стрик: x{streak}" if streak > 1 else ""
+            
+            leaderboard_text += f"{idx}. {icon} {username} — <b>{score}/10</b>{streak_text}\n"
+            
+        leaderboard_text += "\nХочешь жестко могнуть этот топ? Отправляй фото с идеальной геометрией черт!"
+        await message.answer(leaderboard_text, parse_mode="HTML")
+        
+    except Exception as e:
+        logger.error(f"Error querying leaderboard: {e}")
+        await message.answer("❌ Произошла техническая ошибка при загрузке таблицы лидеров.")
 
 
 @dp.message(F.text == "💎 Премиум")
@@ -139,45 +170,6 @@ async def process_premium(message: Message, state: FSMContext):
         "Функция Premium интеграции находится в разработке (скоро через Telegram Stars)."
     )
     await message.answer(premium_text)
-
-
-@dp.message(F.text == "📜 История")
-async def process_history(message: Message, state: FSMContext):
-    await state.clear()
-    user_id = message.from_user.id
-    
-    if not supabase:
-        await message.answer("⚠️ Система хранения истории отключена или недоступна.")
-        return
-
-    try:
-        response = (
-            supabase.table("photo_ratings")
-            .select("*")
-            .eq("user_id", user_id)
-            .order("created_at", desc=True)
-            .limit(5)
-            .execute()
-        )
-        
-        if not response.data:
-            await message.answer(
-                "📜 Ваша история пуста\n\nВы еще не сканировали фотографии в нашем боте."
-            )
-            return
-            
-        history_text = "📜 Ваши последние 5 сканирований:\n\n"
-        for idx, row in enumerate(response.data, 1):
-            raw_date = row.get('created_at', '-----')
-            formatted_date = raw_date[:10] if len(raw_date) >= 10 else raw_date
-            score = row.get('score', 0.0)
-            history_text += f"{idx}. Оценка: ⭐ {score}/10 | Дата: {formatted_date}\n"
-            
-        await message.answer(history_text)
-        
-    except Exception as e:
-        logger.error(f"Error querying history from Supabase for user {user_id}: {e}")
-        await message.answer("❌ Произошла техническая ошибка при чтении истории.")
 
 # --- ОБРАБОТКА ФОТО (FSM СЦЕНАРИЙ) ---
 
@@ -212,15 +204,45 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
         score = result.get("score", 0.0)
         report = result.get("report", "⚠️ Отчет пуст.")
 
-        if score > 0 and supabase:
+# ЛОГИКА ТАБЛИЦЫ ЛИДЕРОВ И СТРИКОВ
+        if score >= 6.0 and supabase:
             try:
-                supabase.table("photo_ratings").insert({
-                    "user_id": user_id,
-                    "username": username,
-                    "score": score,
-                    "report": report
-                }).execute()
-                logger.info(f"Analysis results saved to Supabase for user {user_id}")
+                user_check = supabase.table("leaderboard").select("*").eq("user_id", user_id).execute()
+                
+                if user_check.data:
+                    current_record = user_check.data[0]
+                    old_max = current_record.get("max_score", 0.0)
+                    old_streak = current_record.get("streak", 1)
+                    
+                    if score > old_max:
+                        # Побит личный рекорд — обновляем балл, сбрасываем стрик в 1
+                        supabase.table("leaderboard").update({
+                            "username": username,
+                            "max_score": score,
+                            "streak": 1,
+                            "updated_at": datetime.utcnow().isoformat()
+                        }).eq("user_id", user_id).execute()
+                        logger.info(f"New personal record for {user_id}: {score}")
+                        
+                    elif abs(score - old_max) <= 0.3:
+                        # Результат удержан в пределах погрешности — качаем стрик!
+                        new_streak = old_streak + 1
+                        supabase.table("leaderboard").update({
+                            "username": username,
+                            "streak": new_streak,
+                            "updated_at": datetime.utcnow().isoformat()
+                        }).eq("user_id", user_id).execute()
+                        logger.info(f"User {user_id} maintained score. Streak grew to {new_streak}")
+                else:
+                    # Новый игрок врывается в топ
+                    supabase.table("leaderboard").insert({
+                        "user_id": user_id,
+                        "username": username,
+                        "max_score": score,
+                        "streak": 1
+                    }).execute()
+                    logger.info(f"New user {user_id} added to leaderboard with score {score}")
+                    
             except Exception as db_err:
                 logger.error(f"Failed to record statistics in Supabase: {db_err}")
 
