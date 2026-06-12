@@ -99,18 +99,22 @@ def calculate_face_metrics(image_path):
     face_height = abs(chin.y - forehead.y)
     face_ratio = face_height / face_width
 
-    # СТРОГАЯ МАТЕМАТИКА СИММЕТРИИ
-    # 1. Находим центр между глазами
+    # СТРОГАЯ ДВУХОСЕВАЯ МАТЕМАТИКА СИММЕТРИИ
+    # 1. Вертикальная асимметрия (сдвиг носа по оси X)
     eye_center_x = (left_eye.x + right_eye.x) / 2
+    deviation_x = abs(nose.x - eye_center_x)
+    error_x = (deviation_x / face_width) * 4.0  # Увеличили строгость до 4.0
+
+    # 2. Горизонтальная асимметрия (наклон глаз по оси Y)
+    # В идеале оба глаза должны быть на одной высоте (разница y равна 0)
+    deviation_y = abs(right_eye.y - left_eye.y)
+    error_y = (deviation_y / face_width) * 4.0  # Штраф за разницу по высоте
+
+    # 3. Суммируем ошибки
+    total_error = error_x + error_y
     
-    # 2. Вычисляем абсолютное отклонение носа от этого центра
-    deviation = abs(nose.x - eye_center_x)
-    
-    # 3. Считаем ошибку относительно ширины лица и масштабируем её (коэффициент 3.5 делает формулу чуткой)
-    error_factor = (deviation / face_width) * 3.5
-    
-    # 4. Переводим в 10-балльную шкалу и жестко ограничиваем рамками от 0.0 до 10.0
-    symmetry = max(0.0, min(10.0, (1.0 - error_factor) * 10))
+    # 4. Переводим в 10-балльную шкалу
+    symmetry = max(0.0, min(10.0, (1.0 - total_error) * 10))
 
     # Расчет яркости
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -118,7 +122,7 @@ def calculate_face_metrics(image_path):
 
     return {
         "face_ratio": round(face_ratio, 2),
-        "symmetry": round(symmetry, 1),  
+        "symmetry": round(symmetry, 1),
         "brightness": round(brightness, 1)
     }
 
