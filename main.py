@@ -208,55 +208,59 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
 
 # ЛОГИКА ТАБЛИЦЫ ЛИДЕРОВ И СТРИКОВ
         milestone_text = ""
-        # Снизил порог до 6.0, чтобы больше людей попадало в рейтинг
-        if score >= 7.0 and supabase:
+        if supabase:
             try:
                 current_photo_id = photo.file_id
+                # Ищем запись по ID пользователя
                 user_check = supabase.table("leaderboard").select("*").eq("user_id", user_id).execute()
                 
                 if user_check.data:
-                    current_record = user_check.data[0]
-                    old_max = current_record.get("max_score", 0.0)
-                    old_streak = current_record.get("streak", 1)
-                    last_photo_id = current_record.get("last_photo_id", "")
+                    record = user_check.data[0]
+                    old_max = float(record.get("max_score", 0.0))
+                    old_streak = int(record.get("streak", 1))
+                    last_photo_id = record.get("last_photo_id", "")
                     
                     if last_photo_id == current_photo_id:
-                        milestone_text = "⚠️ <b>Стрик не засчитан!</b>\nВы отправили то же самое фото. Сделайте новый снимок для прогресса."
+                        milestone_text = "⚠️ <b>Стрик не засчитан!</b> Вы отправили то же самое фото."
                     
                     elif score > old_max:
-                        # Новый рекорд
+                        # Новый рекорд — обновляем
                         supabase.table("leaderboard").update({
                             "max_score": score,
                             "last_photo_id": current_photo_id,
                             "updated_at": datetime.now().isoformat()
                         }).eq("user_id", user_id).execute()
-                        milestone_text = f"👑 <b>Новый рекорд!</b>\nВаш результат <b>{score}/10</b> (предыдущий: {old_max})."
+                        milestone_text = f"👑 <b>Новый рекорд!</b> Ваша оценка: <b>{score}/10</b>."
                     
-                    elif abs(score - old_max) <= 0.5: # Расширил окно для стрик-подтверждения до 0.5
+                    elif abs(score - old_max) <= 0.5:
+                        # Подтверждение уровня — обновляем стрик
                         new_streak = old_streak + 1
                         supabase.table("leaderboard").update({
                             "streak": new_streak,
                             "last_photo_id": current_photo_id,
                             "updated_at": datetime.now().isoformat()
                         }).eq("user_id", user_id).execute()
-                        milestone_text = f"🔥 <b>Стрик подтвержден: x{new_streak}!</b>\nВаш уровень {score}/10 стабилен."
+                        milestone_text = f"🔥 <b>Стрик х{new_streak}!</b> Ваш уровень стабилен ({score}/10)."
                     
                     else:
-                        milestone_text = f"✅ Анализ завершен.\nВаш балл: <b>{score}/10</b> (Личный рекорд: {old_max}/10)."
+                        milestone_text = f"✅ Анализ: <b>{score}/10</b>. (Ваш рекорд: {old_max}/10)."
+                
                 else:
-                    # Первый раз в таблице
+                    # Новая запись — создаем
                     supabase.table("leaderboard").insert({
                         "user_id": user_id,
                         "username": username,
                         "max_score": score,
                         "streak": 1,
-                        "last_photo_id": current_photo_id
+                        "last_photo_id": current_photo_id,
+                        "updated_at": datetime.now().isoformat()
                     }).execute()
-                    milestone_text = f"🏆 <b>Добро пожаловать в таблицу!</b>\nВаш результат <b>{score}/10</b> зафиксирован."
+                    milestone_text = f"🏆 <b>Добро пожаловать в таблицу!</b> Результат <b>{score}/10</b> зафиксирован."
                             
             except Exception as db_err:
-                logger.error(f"Failed to record statistics: {db_err}")
-
+                logger.error(f"DB Error: {db_err}")
+                milestone_text = "❌ Ошибка записи в базу."
+                
         # Удаляем сообщение с анимацией загрузки и присылаем готовый HTML-отчет
         await bot.delete_message(chat_id=message.chat.id, message_id=waiting_msg.message_id)
         await message.reply(report, parse_mode="HTML")
