@@ -87,14 +87,14 @@ def calculate_face_metrics(image_path):
     if landmarks is None:
         return None
 
-    # Перевод точек в пиксели
+    # Перевод ключевых точек в пиксели
     left_eye_x, left_eye_y = landmarks[33].x * w, landmarks[33].y * h
     right_eye_x, right_eye_y = landmarks[263].x * w, landmarks[263].y * h
     nose_x, nose_y = landmarks[1].x * w, landmarks[1].y * h
     chin_y = landmarks[152].y * h
     forehead_y = landmarks[10].y * h
 
-    # Базовые размеры
+    # Размеры
     face_width = max(abs(right_eye_x - left_eye_x), 1.0)
     face_height = abs(chin_y - forehead_y)
     face_ratio = face_height / face_width
@@ -104,19 +104,16 @@ def calculate_face_metrics(image_path):
         (61, 291), (323, 93), (172, 397), (78, 308)
     ]
 
-    # Коррекция угла наклона головы
+    # Коррекция поворота
     dy = right_eye_y - left_eye_y
     dx = right_eye_x - left_eye_x
     angle = math.atan2(dy, dx)
-    
-    cos_a = math.cos(-angle)
-    sin_a = math.sin(-angle)
+    cos_a, sin_a = math.cos(-angle), math.sin(-angle)
 
     total_deviation = 0.0
-    cx = (left_eye_x + right_eye_x) / 2
-    cy = (left_eye_y + right_eye_y) / 2
+    cx, cy = (left_eye_x + right_eye_x) / 2, (left_eye_y + right_eye_y) / 2
 
-    # Расчет симметрии с учетом поворота
+    # Расчет симметрии
     for p1, p2 in pairs:
         pt1_x, pt1_y = landmarks[p1].x * w, landmarks[p1].y * h
         pt2_x, pt2_y = landmarks[p2].x * w, landmarks[p2].y * h
@@ -133,22 +130,30 @@ def calculate_face_metrics(image_path):
     nose_x_opt = cos_a * (nose_x - cx) - sin_a * (nose_y - cy)
     total_deviation += abs(nose_x_opt) * 2
 
-    # АДАПТИВНАЯ НОРМАЛИЗАЦИЯ
-    # Делим на ширину лица и применяем множитель чувствительности
-    # 0.35 для близких фото, 0.25 для дальних (чтобы не душить оценку)
+    # АДАПТИВНАЯ НОРМАЛИЗАЦИЯ И «АНТИ-ИНФЛЯЦИЯ»
     raw_error = total_deviation / face_width
     scale_multiplier = 0.35 if face_width > 200 else 0.25 
     
-    symmetry = max(0.0, min(10.0, (1.0 - (raw_error * scale_multiplier)) * 10))
+    # Считаем сырой балл
+    raw_score = max(0.0, (1.0 - (raw_error * scale_multiplier)) * 10)
+    
+    # Жесткое ограничение (анти-инфляция): 
+    # выше 7.0 балл растет медленнее, чтобы не плодить десятки
+    if raw_score > 7.0:
+        symmetry = 7.0 + ((raw_score - 7.0) * 0.6)
+    else:
+        symmetry = raw_score
+        
+    symmetry = round(max(0.0, min(10.0, symmetry)), 1)
 
-    # Яркость для учета условий освещения
+    # Яркость
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    brightness = gray.mean()
+    brightness = round(gray.mean(), 1)
 
     return {
         "face_ratio": round(face_ratio, 2),
-        "symmetry": round(symmetry, 1),
-        "brightness": round(brightness, 1)
+        "symmetry": symmetry,
+        "brightness": brightness
     }
 
 def build_prompt(metrics):
