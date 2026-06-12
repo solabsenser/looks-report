@@ -206,7 +206,7 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
 
 # ЛОГИКА ТАБЛИЦЫ ЛИДЕРОВ И СТРИКОВ
         milestone_text = ""
-        if score >= 6.0 and supabase:
+        if score >= 7.0 and supabase:
             try:
                 # Получаем уникальный ID текущей фотографии
                 current_photo_id = photo.file_id
