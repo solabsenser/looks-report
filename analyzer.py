@@ -160,6 +160,7 @@ You MUST classify the subject into one of the categories below based on your ove
 OUTPUT FORMAT RULES:
 - Use standard Telegram Markdown formatting. 
 - Use **double asterisks** for bold text to highlight key areas as shown in the template.
+- NEVER nest double asterisks inside each other or put them back-to-back (e.g., do NOT do **:** **).
 - KEEP ALL EMOJIS in the template below; they must appear exactly as written.
 - Follow the template exactly:
 
@@ -173,7 +174,7 @@ OUTPUT FORMAT RULES:
 👄 **Губы:** X.X/10
 👀 **Область глаз:** X.X/10
 
-🧔 **Потенциал внешности:** **[Enter one classification from the SCALE: true adam, chad, htn, mtn, ltn, sub 5, or sub 3 in uppercase or brackets]**
+🧔 **Потенциал внешности: [Enter one classification from the SCALE: true adam, chad, htn, mtn, ltn, sub 5, or sub 3 in uppercase or brackets]**
 
 **Плюсы:**
 ✅ [State an objective geometric advantage, e.g., flawless eye symmetry or defined jawline structure]
