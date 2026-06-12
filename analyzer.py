@@ -145,14 +145,14 @@ def calculate_face_metrics(image_path):
         total_deviation += abs(abs(x1_opt) - abs(x2_opt))
         total_deviation += abs(y1_opt - y2_opt)
 
-    # Проверяем положение кончика носа
+    # Проверяем положение кончика носа (исправлено на nose_x и nose_y)
     nose_x_opt = cos_a * (nose_x - cx) - sin_a * (nose_y - cy)
     total_deviation += abs(nose_x_opt) * 2
 
-    # Деление пиксельной ошибки на пиксельную ширину лица дает идеальную точность
+    # Деление пиксельной ошибки на пиксельную ширину лица
     error_factor = total_deviation / face_width
     
-    # Корректируем жесткость: уменьшаем влияние микро-ошибок (множитель 0.35)
+    # Смягчаем коэффициент до 0.35, чтобы мелкие тени не ломали оценку
     symmetry = max(0.0, min(10.0, (1.0 - (error_factor * 0.35)) * 10))
 
     # Расчет яркости
