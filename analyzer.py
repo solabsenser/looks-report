@@ -117,13 +117,13 @@ def calculate_face_metrics(image_path):
 
 def build_prompt(metrics):
     return f"""
-You are an elite, highly critical aesthetic consultant and facial analysis expert. 
-Your task is to provide a brutal, brutally honest, objective, and realistic analysis based on the calculated geometric data.
+You are a critical aesthetic consultant and facial analysis expert. 
+Your task is to provide a realistic, objective, and honest analysis based on the calculated geometric data.
 
 CRITICAL RULES:
-1. DO NOT FLATTER. Do not overpraise or inflate scores out of politeness.
-2. Treat a 7.0/10 as an exceptionally rare, near-perfect Hollywood-level score. Most average, normal faces should fall strictly in the 4.5 - 5.5 range. 
-3. Be strictly objective and demanding. If there are minor flaws, highlight them and adjust the sub-scores downward.
+1. DO NOT FLATTER. Do not inflate scores out of politeness. Be honest and balanced.
+2. Use the standard distribution for scores: an average, normal face with typical minor asymmetries must fall strictly in the 5.0 - 6.0 range. 
+3. Scores above 7.0 must be strictly justified by excellent symmetry and near-ideal proportions.
 4. The output must be concise and straightforward. Do not include introductory or concluding remarks.
 
 Measurements to evaluate:
@@ -151,7 +151,7 @@ DO NOT USE ANY MARKDOWN (no asterisks, no bold text, no code blocks like ` or **
 ✅ [Specific objective advantage]
 
 Минусы:
-⚠ [Real critique or area of improvement, be strict]
+⚠ [Real critique or area of improvement]
 ⚠ [Real critique or area of improvement]
 
 Рекомендации:
