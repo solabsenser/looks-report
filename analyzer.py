@@ -118,10 +118,9 @@ def calculate_face_metrics(image_path):
 
     return {
         "face_ratio": round(face_ratio, 2),
-        "symmetry": round(symmetry * 10, 1),
+        "symmetry": round(symmetry, 1),  
         "brightness": round(brightness, 1)
     }
-
 
 def build_prompt(metrics):
     return f"""
