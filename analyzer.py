@@ -81,21 +81,25 @@ def calculate_face_metrics(image_path):
     if image is None:
         return None
 
+    # Получаем реальный размер картинки в пикселях
+    h, w, _ = image.shape
+
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     landmarks = detect_face_landmarks(rgb)
 
     if landmarks is None:
         return None
 
-    left_eye = landmarks[33]
-    right_eye = landmarks[263]
-    nose = landmarks[1]
-    chin = landmarks[152]
-    forehead = landmarks[10]
+    # Переводим ключевые точки в реальные пиксели экрана
+    left_eye_x, left_eye_y = landmarks[33].x * w, landmarks[33].y * h
+    right_eye_x, right_eye_y = landmarks[263].x * w, landmarks[263].y * h
+    nose_x, nose_y = landmarks[1].x * w, landmarks[1].y * h
+    chin_y = landmarks[152].y * h
+    forehead_y = landmarks[10].y * h
 
-    # Расчет пропорций лица
-    face_width = max(abs(right_eye.x - left_eye.x), 0.001)
-    face_height = abs(chin.y - forehead.y)
+    # Расчет пропорций лица (в пикселях)
+    face_width = max(abs(right_eye_x - left_eye_x), 1.0)
+    face_height = abs(chin_y - forehead_y)
     face_ratio = face_height / face_width
 
     # УЛЬТРА-СТРОГАЯ ПРОВЕРКА СИММЕТРИИ ПО ВСЕМУ ЛИЦУ (16 точек)
@@ -110,9 +114,9 @@ def calculate_face_metrics(image_path):
         (78, 308)    # Внешний контур губ
     ]
 
-    # Высчитываем угол наклона головы по линии глаз
-    dy = right_eye.y - left_eye.y
-    dx = right_eye.x - left_eye.x
+    # Высчитываем точный угол наклона головы в пиксельной сетке
+    dy = right_eye_y - left_eye_y
+    dx = right_eye_x - left_eye_x
     angle = math.atan2(dy, dx)
     
     cos_a = math.cos(-angle)
@@ -120,34 +124,36 @@ def calculate_face_metrics(image_path):
 
     total_deviation = 0.0
     
-    # Центр вращения — точка ровно между глазами
-    cx = (left_eye.x + right_eye.x) / 2
-    cy = (left_eye.y + right_eye.y) / 2
+    # Центр вращения в пикселях
+    cx = (left_eye_x + right_eye_x) / 2
+    cy = (left_eye_y + right_eye_y) / 2
 
-    # Проходим по парам точек, виртуально выравнивая их под один горизонт
+    # Проходим по парам точек с переводом в пиксели и выравниванием
     for p1, p2 in pairs:
-        pt1 = landmarks[p1]
-        pt2 = landmarks[p2]
+        pt1_x, pt1_y = landmarks[p1].x * w, landmarks[p1].y * h
+        pt2_x, pt2_y = landmarks[p2].x * w, landmarks[p2].y * h
         
-        # Поворачиваем левую точку вокруг виртуального центра
-        x1_opt = cos_a * (pt1.x - cx) - sin_a * (pt1.y - cy)
-        y1_opt = sin_a * (pt1.x - cx) + cos_a * (pt1.y - cy)
+        # Поворачиваем левую точку
+        x1_opt = cos_a * (pt1_x - cx) - sin_a * (pt1_y - cy)
+        y1_opt = sin_a * (pt1_x - cx) + cos_a * (pt1_y - cy)
         
-        # Поворачиваем правую точку вокруг виртуального центра
-        x2_opt = cos_a * (pt2.x - cx) - sin_a * (pt2.y - cy)
-        y2_opt = sin_a * (pt2.x - cx) + cos_a * (pt2.y - cy)
+        # Поворачиваем правую точку
+        x2_opt = cos_a * (pt2_x - cx) - sin_a * (pt2.y - cy)
+        y2_opt = sin_a * (pt2_x - cx) + cos_a * (pt2.y - cy)
         
-        # Сравниваем координаты после выравнивания
+        # Сравниваем пиксельные отклонения
         total_deviation += abs(abs(x1_opt) - abs(x2_opt))
         total_deviation += abs(y1_opt - y2_opt)
 
-    # Проверяем положение кончика носа в повернутых координатах
-    nose_x_opt = cos_a * (nose.x - cx) - sin_a * (nose.y - cy)
+    # Проверяем положение кончика носа
+    nose_x_opt = cos_a * (nose_x - cx) - sin_a * (nose_y - cy)
     total_deviation += abs(nose_x_opt) * 2
 
-    # Сбалансированный коэффициент 1.2
-    error_factor = (total_deviation / face_width) * 1.2
-    symmetry = max(0.0, min(10.0, (1.0 - error_factor) * 10))
+    # Деление пиксельной ошибки на пиксельную ширину лица дает идеальную точность
+    error_factor = total_deviation / face_width
+    
+    # Корректируем жесткость: уменьшаем влияние микро-ошибок (множитель 0.35)
+    symmetry = max(0.0, min(10.0, (1.0 - (error_factor * 0.35)) * 10))
 
     # Расчет яркости
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
