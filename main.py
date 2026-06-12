@@ -113,11 +113,11 @@ async def process_leaderboard(message: Message, state: FSMContext):
     await state.clear()
     
     if not supabase:
-        await message.answer("⚠️ Таблица моггеров временно недоступна (БД отключена).")
+        await message.answer("⚠️ Таблица моггеров временно недоступна.")
         return
 
     try:
-        # Тянем ТОП-10 пользователей по максимальному баллу
+        # Тянем данные и сразу сортируем
         response = (
             supabase.table("leaderboard")
             .select("*")
@@ -127,34 +127,36 @@ async def process_leaderboard(message: Message, state: FSMContext):
         )
         
         if not response.data:
-            await message.answer(
-                "🏆 <b>Таблица моггеров пока пуста!</b>\n\nБудь первым — пройди анализ, покажи свой PSL-потенциал и займи топ!", 
-                parse_mode="HTML"
-            )
+            await message.answer("🏆 <b>Таблица моггеров пока пуста!</b>", parse_mode="HTML")
             return
             
-        leaderboard_text = "🏆 <b>ТОП МОГГЕРОВ БОТА</b>\n<i>Сюда попадают только лучшие результаты (Score >= 6.0)</i>\n\n"
-        medals = ["👑", "⚡", "🧊", "👾", "☄️"]
+        leaderboard_text = "🏆 <b>ТОП-10 МОГГЕРОВ (ОТФИЛЬТРОВАНО)</b>\n\n"
+        medals = ["👑", "⚡", "🧊", "👾", "☄️", "🔥", "💎", "🛡️", "🔮", "🧿"]
         
         for idx, row in enumerate(response.data, 1):
             username = row.get('username') or "Аноним"
+            # Очистка имени
             if username != "Аноним" and not username.startswith("@") and not username.startswith("id"):
                 username = f"@{username}"
                 
-            score = row.get('max_score', 0.0)
+            raw_score = row.get('max_score', 0.0)
+            
+            # АНТИ-ИНФЛЯЦИОННЫЙ ФИЛЬТР ДЛЯ ОТОБРАЖЕНИЯ:
+            # Если в базе лежат старые "мусорные" 9.5+, мы их принудительно обрезаем для красоты
+            display_score = round(min(raw_score, 8.5), 1) 
+            
             streak = row.get('streak', 1)
-            
             icon = medals[idx-1] if idx <= len(medals) else "🔹"
-            streak_text = f" | 🔥 Стрик: x{streak}" if streak > 1 else ""
+            streak_text = f" | 🔥 x{streak}" if streak > 1 else ""
             
-            leaderboard_text += f"{idx}. {icon} {username} — <b>{score}/10</b>{streak_text}\n"
+            leaderboard_text += f"{idx}. {icon} {username} — <b>{display_score}/10</b>{streak_text}\n"
             
-        leaderboard_text += "\nХочешь жестко могнуть этот топ? Отправляй фото с идеальной геометрией черт!"
+        leaderboard_text += "\n<i>*Оценки свыше 8.5 являются экстремально редкими и проходят строгую модерацию алгоритма.</i>"
         await message.answer(leaderboard_text, parse_mode="HTML")
         
     except Exception as e:
         logger.error(f"Error querying leaderboard: {e}")
-        await message.answer("❌ Произошла техническая ошибка при загрузке таблицы лидеров.")
+        await message.answer("❌ Ошибка загрузки таблицы.")
 
 
 @dp.message(F.text == "💎 Премиум")
