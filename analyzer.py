@@ -129,10 +129,10 @@ def calculate_face_metrics(image_path):
     # Проверяем центровку носа отдельно
     total_deviation += abs(nose.x - eye_center_x) * 2
 
-    # Считаем ошибку и масштабируем (коэффициент 7.5 делает тест супер-чувствительным)
-    error_factor = (total_deviation / face_width) * 7.5
+    # Считаем ошибку и масштабируем (коэффициент 1.2 — идеальный баланс, чтобы не было нулей)
+    error_factor = (total_deviation / face_width) * 1.2
     
-    # Итоговый балл
+    # Итоговый балл (теперь он будет адекватным и реалистичным)
     symmetry = max(0.0, min(10.0, (1.0 - error_factor) * 10))
 
     # Расчет яркости
