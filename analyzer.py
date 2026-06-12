@@ -90,22 +90,30 @@ def calculate_face_metrics(image_path):
 
     left_eye = landmarks[33]
     right_eye = landmarks[263]
-
     nose = landmarks[1]
-
     chin = landmarks[152]
     forehead = landmarks[10]
 
-    face_width = abs(right_eye.x - left_eye.x)
+    # Расчет пропорций лица
+    face_width = max(abs(right_eye.x - left_eye.x), 0.001)
     face_height = abs(chin.y - forehead.y)
+    face_ratio = face_height / face_width
 
-    face_ratio = face_height / max(face_width, 0.001)
+    # СТРОГАЯ МАТЕМАТИКА СИММЕТРИИ
+    # 1. Находим центр между глазами
+    eye_center_x = (left_eye.x + right_eye.x) / 2
+    
+    # 2. Вычисляем абсолютное отклонение носа от этого центра
+    deviation = abs(nose.x - eye_center_x)
+    
+    # 3. Считаем ошибку относительно ширины лица и масштабируем её (коэффициент 3.5 делает формулу чуткой)
+    error_factor = (deviation / face_width) * 3.5
+    
+    # 4. Переводим в 10-балльную шкалу и жестко ограничиваем рамками от 0.0 до 10.0
+    symmetry = max(0.0, min(10.0, (1.0 - error_factor) * 10))
 
-    eye_center = (left_eye.x + right_eye.x) / 2
-    symmetry = 1 - abs(nose.x - eye_center)
-
+    # Расчет яркости
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
     brightness = gray.mean()
 
     return {
