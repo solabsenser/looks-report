@@ -209,7 +209,7 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
 # ЛОГИКА ТАБЛИЦЫ ЛИДЕРОВ И СТРИКОВ
         milestone_text = ""
         # Снизил порог до 6.0, чтобы больше людей попадало в рейтинг
-        if score >= 6.0 and supabase:
+        if score >= 7.0 and supabase:
             try:
                 current_photo_id = photo.file_id
                 user_check = supabase.table("leaderboard").select("*").eq("user_id", user_id).execute()
