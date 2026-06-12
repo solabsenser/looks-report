@@ -3,7 +3,7 @@ import logging
 import asyncio
 from datetime import datetime
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand, BotCommandScopeDefault
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
@@ -262,11 +262,6 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
             await asyncio.sleep(1)  # Небольшая пауза, чтобы сообщения не слипались
             await message.answer(milestone_text, parse_mode="HTML")
             
-        await state.clear()
-
-        await bot.delete_message(chat_id=message.chat.id, message_id=waiting_msg.message_id)
-        
-        await message.reply(report, parse_mode="HTML")
         await state.clear()
 
     except Exception as e:
