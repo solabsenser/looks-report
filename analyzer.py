@@ -94,6 +94,22 @@ def calculate_face_metrics(image_path):
     # Перевод ключевых точек в пиксели
     left_eye_x, left_eye_y = landmarks[33].x * w, landmarks[33].y * h
     right_eye_x, right_eye_y = landmarks[263].x * w, landmarks[263].y * h
+    eye_width_reference = max(
+        abs(right_eye_x - left_eye_x),
+        1.0
+    )
+
+    face_width_reference = landmark_distance(
+        landmarks[234],
+        landmarks[454],
+        w,
+        h
+    )
+
+    face_width_reference = max(
+        face_width_reference,
+        1.0
+    )
     nose_x, nose_y = landmarks[1].x * w, landmarks[1].y * h
     chin_y = landmarks[152].y * h
     forehead_y = landmarks[10].y * h
@@ -108,7 +124,7 @@ def calculate_face_metrics(image_path):
 
     face_width = max(face_width, 1.0)
     face_height = abs(chin_y - forehead_y)
-    face_ratio = face_height / face_width
+    face_ratio = face_height / face_width_reference
 
     pairs = [
         (33, 263), (133, 362), (70, 300), (107, 336),
@@ -218,10 +234,10 @@ def calculate_face_metrics(image_path):
         h
     )
 
-    nose_ratio = nose_width / face_width
-    mouth_ratio = mouth_width / face_width
-    jaw_ratio = jaw_width / face_width
-    eye_spacing_ratio = eye_spacing / face_width
+    nose_ratio = nose_width / face_width_reference
+    mouth_ratio = mouth_width / face_width_reference
+    jaw_ratio = jaw_width / face_width_reference
+    eye_spacing_ratio = eye_spacing / eye_width_reference
 
     print({
         "face_ratio": round(face_ratio, 2),
