@@ -307,6 +307,16 @@ def calculate_scores(metrics):
     proportion_score = 10 - abs(ratio - ideal_ratio) * 12
     proportion_score = clamp(proportion_score)
 
+    # Вертикальные трети лица
+    thirds_ratio = metrics["thirds_ratio"]
+
+    thirds_score = (
+        10 -
+        abs(thirds_ratio - 1.0) * 8
+    )
+
+    thirds_score = clamp(thirds_score)
+    
     # Глаза
     eye_spacing = metrics["eye_spacing_ratio"]
 
@@ -336,16 +346,18 @@ def calculate_scores(metrics):
 
     overall_score = (
         symmetry_score * 0.30 +
-        proportion_score * 0.20 +
+        proportion_score * 0.15 +
+        thirds_score * 0.10 +
         eye_score * 0.15 +
         jaw_score * 0.20 +
-        nose_score * 0.10 +
+        nose_score * 0.05 +
         image_score * 0.05
     )
 
     return {
         "symmetry_score": round(symmetry_score, 1),
         "proportion_score": round(proportion_score, 1),
+        "thirds_score": round(thirds_score, 1),
         "eye_score": round(eye_score, 1),
         "nose_score": round(nose_score, 1),
         "jaw_score": round(jaw_score, 1),
@@ -549,13 +561,10 @@ def analyze_face(image_path):
 ⭐ <b>Overall Rating (Appeal):</b> {scores['overall_score']}/10
 
 👁 <b>Симметрия лица (PSL):</b> {scores['symmetry_score']}/10
-
 📏 <b>Пропорции лица:</b> {scores['proportion_score']}/10
-
+📐 <b>Вертикальные пропорции:</b> {scores['thirds_score']}/10
 🦴 <b>Выраженность челюсти:</b> {scores['jaw_score']}/10
-
 👃 <b>Нос:</b> {scores['nose_score']}/10
-
 👀 <b>Область глаз:</b> {scores['eye_score']}/10
 
 🧔 <b>Потенциал внешности:</b> {tier}
