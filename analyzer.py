@@ -392,10 +392,6 @@ def analyze_face(image_path):
     try:
         metrics = calculate_face_metrics(image_path)
 
-        print(scores)
-        print("METRICS:", metrics)
-        print("SCORES:", scores)
-        
         if metrics is None:
             return {
                 "score": 0,
@@ -410,14 +406,17 @@ def analyze_face(image_path):
             }
 
         scores = calculate_scores(metrics)
-        
-        # Вызов Groq API вместо Gemini
+
+        print("METRICS:", metrics)
+        print("SCORES:", scores)
+
+        # Вызов Groq API
         response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "user", "content": build_prompt(metrics)}
             ],
-            temperature=0.3  # Чуть ниже температуру, чтобы строго следовала шаблону
+            temperature=0.3
         )
 
         report = response.choices[0].message.content.strip()
