@@ -229,6 +229,62 @@ def calculate_face_metrics(image_path):
         "eye_spacing_ratio": round(eye_spacing_ratio, 3)
     }
 
+def clamp(value, min_value=0.0, max_value=10.0):
+    return max(min_value, min(max_value, value))
+
+
+def calculate_scores(metrics):
+
+    # Симметрия уже готова
+    symmetry_score = metrics["symmetry"]
+
+    # Пропорции лица
+    ratio = metrics["face_ratio"]
+
+    ideal_ratio = 1.55
+
+    proportion_score = 10 - abs(ratio - ideal_ratio) * 12
+    proportion_score = clamp(proportion_score)
+
+    # Глаза
+    eye_spacing = metrics["eye_spacing_ratio"]
+
+    eye_score = 10 - abs(eye_spacing - 0.38) * 40
+    eye_score = clamp(eye_score)
+
+    # Нос
+    nose_ratio = metrics["nose_ratio"]
+
+    nose_score = 10 - abs(nose_ratio - 0.25) * 25
+    nose_score = clamp(nose_score)
+
+    # Челюсть
+    jaw_ratio = metrics["jaw_ratio"]
+
+    jaw_score = 10 - abs(jaw_ratio - 0.75) * 15
+    jaw_score = clamp(jaw_score)
+
+    # Качество фото
+    image_score = metrics["image_quality"]
+
+    overall_score = (
+        symmetry_score * 0.30 +
+        proportion_score * 0.20 +
+        eye_score * 0.15 +
+        jaw_score * 0.20 +
+        nose_score * 0.10 +
+        image_score * 0.05
+    )
+
+    return {
+        "symmetry_score": round(symmetry_score, 1),
+        "proportion_score": round(proportion_score, 1),
+        "eye_score": round(eye_score, 1),
+        "nose_score": round(nose_score, 1),
+        "jaw_score": round(jaw_score, 1),
+        "overall_score": round(overall_score, 1)
+    }
+    
 def build_prompt(metrics):
     return f"""
 You are an advanced, independent, and brutally realistic AI Facial Aesthetics and Looksmaxxing Analyst. Your objective is to evaluate facial symmetry, proportions, feature harmony, and tissue quality with forensic precision, blending the objective data from MediaPipe with core looksmaxxing community concepts without any rating inflation or cope.
@@ -320,7 +376,12 @@ def extract_score(report):
 def analyze_face(image_path):
     try:
         metrics = calculate_face_metrics(image_path)
+        scores = calculate_scores(metrics)
 
+        print(scores)
+        print("METRICS:", metrics)
+        print("SCORES:", scores)
+        
         if metrics is None:
             return {
                 "score": 0,
