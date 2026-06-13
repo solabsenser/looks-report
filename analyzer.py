@@ -186,8 +186,8 @@ def calculate_face_metrics(image_path):
 
 # Ширина челюсти
     jaw_width = landmark_distance(
-        landmarks[172],
-        landmarks[397],
+        landmarks[234],
+        landmarks[454],
         w,
         h
     )
