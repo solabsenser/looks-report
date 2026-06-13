@@ -350,8 +350,36 @@ def calculate_scores(metrics):
         "jaw_score": round(jaw_score, 1),
         "overall_score": round(overall_score, 1)
     }
+
+def get_tier(score):
+
+    if score >= 9.5:
+        return "TRUE ADAM"
+
+    elif score >= 8.5:
+        return "CHAD"
+
+    elif score >= 7.5:
+        return "CHADLITE"
+
+    elif score >= 6.8:
+        return "HTN"
+
+    elif score >= 5.5:
+        return "MTN"
+
+    elif score >= 4.5:
+        return "LTN"
+
+    elif score >= 3.5:
+        return "SUB 5"
+
+    elif score >= 2.5:
+        return "SUB 3"
+
+    return "SUBHUMAN"
     
-def build_prompt(metrics, scores):
+def build_prompt(metrics, scores, tier):
     return f"""
 You are an advanced facial geometry analyst.
 
@@ -411,6 +439,56 @@ You are NOT allowed to replace them.
 You are NOT allowed to invent new scores.
 
 You are ONLY allowed to explain them.
+
+FINAL SCORE LOCK
+
+You MUST output:
+
+⭐ Overall Rating (Appeal): {scores['overall_score']}/10
+
+exactly.
+
+You are NOT allowed to modify the score.
+
+You are NOT allowed to round the score.
+
+You are NOT allowed to replace the score.
+
+METRIC LOCK
+
+You MUST output the exact numerical values provided below.
+
+Symmetry = {scores['symmetry_score']}
+Proportions = {scores['proportion_score']}
+Jaw = {scores['jaw_score']}
+Nose = {scores['nose_score']}
+Eyes = {scores['eye_score']}
+
+Do not change any value.
+
+Do not round any value.
+
+Do not improve any value.
+
+Do not reduce any value.
+
+=================================================
+TIER LOCK
+=================================================
+
+Tier has already been calculated.
+
+Tier = {tier}
+
+You MUST use this exact tier.
+
+You are NOT allowed to recalculate tier.
+
+You are NOT allowed to change tier.
+
+You are NOT allowed to replace tier.
+
+Any tier different from {tier} is incorrect.
 
 =================================================
 VISUAL LIMITATIONS
@@ -488,38 +566,6 @@ If image quality is below 4:
 mention reduced confidence due to image quality.
 
 =================================================
-TIER SCALE
-=================================================
-
-9.5+ = TRUE ADAM
-
-8.5 - 9.4 = CHAD
-
-7.5 - 8.4 = CHADLITE
-
-6.8 - 7.4 = HTN
-
-5.5 - 6.7 = MTN
-
-4.5 - 5.4 = LTN
-
-3.5 - 4.4 = SUB 5
-
-2.5 - 3.4 = SUB 3
-
-0.0 - 2.4 = SUBHUMAN
-
-=================================================
-TIER SELECTION RULE
-=================================================
-
-Select tier ONLY from Overall Score.
-
-Never select a higher tier.
-
-Never select a lower tier.
-
-=================================================
 OUTPUT RULES
 =================================================
 
@@ -534,6 +580,24 @@ Never use markdown.
 Never use *.
 
 Do not output explanations outside the report.
+
+FORBIDDEN PHRASES
+
+Do NOT mention:
+
+- hunter eyes
+- prey eyes
+- maxilla
+- forward growth
+- gonial angle
+- facial fat
+- body fat
+- bloat
+- recessed chin
+
+unless directly supported by numerical measurements.
+
+If unsupported, do not discuss them.
 
 =================================================
 OUTPUT FORMAT
@@ -553,7 +617,7 @@ OUTPUT FORMAT
 
 👀 <b>Область глаз:</b> {scores['eye_score']}/10
 
-🧔 <b>Потенциал внешности:</b> [SELECT TIER FROM SCALE]
+🧔 <b>Потенциал внешности:</b> {tier}
 
 <b>Плюсы:</b>
 
@@ -614,6 +678,7 @@ def analyze_face(image_path):
             }
 
         scores = calculate_scores(metrics)
+        tier = get_tier(scores["overall_score"])
 
         print("METRICS:", metrics)
         print("SCORES:", scores)
@@ -622,7 +687,7 @@ def analyze_face(image_path):
         response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "user", "content": build_prompt(metrics, scores)}
+                {"role": "user", "content": build_prompt(metrics, scores, tier)}
             ],
             temperature=0.3
         )
