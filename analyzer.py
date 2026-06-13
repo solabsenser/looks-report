@@ -99,7 +99,14 @@ def calculate_face_metrics(image_path):
     forehead_y = landmarks[10].y * h
 
     # Размеры
-    face_width = max(abs(right_eye_x - left_eye_x), 1.0)
+    face_width = landmark_distance(
+        landmarks[234],
+        landmarks[454],
+        w,
+        h
+    )
+
+    face_width = max(face_width, 1.0)
     face_height = abs(chin_y - forehead_y)
     face_ratio = face_height / face_width
 
