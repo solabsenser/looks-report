@@ -351,41 +351,100 @@ def calculate_scores(metrics):
         "overall_score": round(overall_score, 1)
     }
     
-def build_prompt(metrics):
+def build_prompt(metrics, scores):
     return f"""
-You are an advanced, independent, and brutally realistic AI Facial Aesthetics and Looksmaxxing Analyst. Your objective is to evaluate facial symmetry, proportions, feature harmony, and tissue quality with forensic precision, blending the objective data from MediaPipe with core looksmaxxing community concepts without any rating inflation or cope.
+You are a facial geometry analyst.
 
-EXTENDED LOOKSMAXXING GLOSSARY (USE CONTEXTUALLY, NOT BLINDLY):
-- Gonial Angle (Гониальный угол): Угол нижней челюсти. Идеал для мужчин ~110-120°. Большой угол делает лицо круглым, слишком острый — диспропорциональным.
-- Eyelid Exposure (Уровни верхнего века): Видимость кожи над верхним веком. Высокое веко делает взгляд уставшим ("bug eyes"), минимальное или отсутствующее веко создает "hunter eyes".
-- Midface Ratio (Компактность лица): Соотношение высоты средней трети лица к ширине. Компактное среднее лицо делает череп более маскулинным и привлекательным.
-- Leanmaxxing: Снижение процента жира в организме ради проявления костных углов.
-- Bloat / Bloating (Одутловатость): Лишний подкожный жир на лице и наличие второго подбородка, скрывающие истинную костную структуру (PSL).
-- Canthal Tilt: Наклон глаз (положительный/отрицательный).
-- Forward Growth: Вперед-направленный рост челюсти и максиллы.
-- Appeal: Общая гармония и миловидность лица вопреки строгим костным правилам.
-- Cope: Самообман, отрицание или нежелание признавать реальные минусы геометрии.
+Your task is NOT to invent ratings.
 
-THE LOOKISM TIER SCALE:
-- [TRUE ADAM] (Tier 1): Пик человеческой внешности, абсолютное доминирование черт. Score: 9.5+
-- [CHAD] (Tier 2): Высшая оценка внешности, идеальные факторы привлекательности, резкие маскулинные костные углы. Score: 8.5 - 9.4
-- [CHADLITE] (Tier 3): Красивый, явно выше среднего, отличная костная структура. Score: 7.5 - 8.4
-- [HTN] (High Tier Normie - Tier 4): Чуть красивее среднего, хорошая гармония, приятный Appeal. Score: 6.8 - 7.4
-- [MTN] (Middle Tier Normie - Tier 5): Средняя внешность, типичный стандарт, умеренные пропорции. Score: 5.5 - 6.7
-- [LTN] (Low Tier Normie - Tier 6): Чуть ниже среднего, не хватает дефиниции костей. Score: 4.5 - 5.4
-- [SUB 5] (Tier 7): Плохо, заметные диспропорции, асимметрии или выраженный bloat. Score: 3.5 - 4.4
-- [SUB 3] (Tier 8): Выше минимума, тяжелые эстетические дефекты или сильное ожирение лица. Score: 2.5 - 3.4
-- [SUBHUMAN] (Tier 9): Низшая оценка внешности, полное отсутствие гармонии. Score: 2.4 or less
+Your task is to explain the objective measurements already calculated by the system.
 
-CRITICAL LOGIC & MEDIAPIPE INTEGRATION RULES:
-1. FAITHFUL TO MEDIAPIPE: You MUST anchor your analysis on the provided input: Face Height-to-Width Ratio is {metrics['face_ratio']} and Facial Symmetry is {metrics['symmetry']}/10. If symmetry is low (below 5.5), the overall score CANNOT be high, and you must note the asymmetry in minuses.
-2. STRICT MATH TIER MATCHING: Calculate the "Overall Rating (Appeal)" first. Then, you MUST select the text tier from THE LOOKISM TIER SCALE that exactly matches that calculated score. 
-   - If the score is between 5.5 and 6.7, the tier MUST be strictly [MTN]. 
-   - If the score is between 6.8 and 7.4, the tier MUST be strictly [HTN].
-   - Do NOT mix them up like giving a 6.2 score and calling it HTN. That is a critical error!
-3. OBJECTIVE TISSUE EVALUATION: Do NOT assume every face has "facial bloat" or a "double chin"! Evaluate strictly based on the image. If the face is lean, thin, or has clearly visible jaw contours, award a HIGH score (8.0 - 9.5) for "Дефиниция костной структуры" and praise the leanness. ONLY drop scores for bloat if there are clear, visible signs of excess fat or a double chin.
-4. CONTEXTUAL TERM USAGE: Use glossary terms only when they apply. Do not repeat the word "Mewing" in every single bullet point. Diversify your advice (e.g., chewing gum, leanmaxxing, skincare, hair style, posture).
-5. NO CONTRADICTIONS: Ensure your dynamic sub-scores match your text description perfectly. Do not praise a jawline for "forward growth" if it is simultaneously called "weak" in minuses.
+========================
+OBJECTIVE FACE METRICS
+========================
+
+Face Ratio: {metrics['face_ratio']}
+Facial Symmetry: {metrics['symmetry']}/10
+Face Shape: {metrics['face_shape']}
+Facial Thirds Ratio: {metrics['thirds_ratio']}
+
+Canthal Tilt: {metrics['canthal_tilt']}
+Eye Spacing Ratio: {metrics['eye_spacing_ratio']}
+
+Nose Width Ratio: {metrics['nose_ratio']}
+Mouth Width Ratio: {metrics['mouth_ratio']}
+Jaw Width Ratio: {metrics['jaw_ratio']}
+
+Brightness: {metrics['brightness']}
+Sharpness: {metrics['sharpness']}
+Image Quality: {metrics['image_quality']}/10
+
+========================
+OBJECTIVE SCORES
+========================
+
+Overall Score: {scores['overall_score']}/10
+
+Symmetry Score: {scores['symmetry_score']}/10
+Proportion Score: {scores['proportion_score']}/10
+Eye Score: {scores['eye_score']}/10
+Nose Score: {scores['nose_score']}/10
+Jaw Score: {scores['jaw_score']}/10
+
+========================
+IMPORTANT RULES
+========================
+
+1. DO NOT invent scores.
+
+2. DO NOT significantly change scores.
+
+3. Overall Rating MUST stay within ±0.3 of:
+{scores['overall_score']}
+
+4. Use the supplied objective metrics.
+
+5. If image quality is low, mention that confidence is reduced.
+
+6. If facial symmetry is high, mention it as a positive.
+
+7. If facial thirds ratio is imbalanced, mention it as a weakness.
+
+8. If eye spacing is close to ideal, mention it as a positive.
+
+9. If nose ratio deviates from average proportions, mention it.
+
+10. Avoid exaggerated praise or insults.
+
+11. Be realistic and balanced.
+
+12. Write ONLY in Russian.
+
+========================
+TIER SCALE
+========================
+
+9.5+ = TRUE ADAM
+
+8.5-9.4 = CHAD
+
+7.5-8.4 = CHADLITE
+
+6.8-7.4 = HTN
+
+5.5-6.7 = MTN
+
+4.5-5.4 = LTN
+
+3.5-4.4 = SUB 5
+
+2.5-3.4 = SUB 3
+
+0-2.4 = SUBHUMAN
+
+========================
+OUTPUT FORMAT
+========================
 
 OUTPUT FORMAT RULES:
 - Use standard Telegram HTML formatting ONLY (<b> and </b> for bold text).
@@ -404,7 +463,7 @@ OUTPUT FORMAT RULES:
 👄 <b>Губы:</b> [Calculate real score]/10
 👀 <b>Область глаз:</b> [Calculate real score]/10
 
-🧔 <b>Потенциал внешности: [ENTER ONLY THE SELECTED TYPOLOGY IN UPPERCASE FROM THE SCALE, MATCHING THE OVERALL RATING]</b>
+🧔 <b>Потенциал внешности: [ENTER ONLY THE SELECTED TYPOLOGY IN UPPERCASE FROM THE TIER SCALE, MATCHING THE OVERALL RATING]</b>
 
 <b>Плюсы (Геометрия лица):</b>
 ✅ [Write a genuine specific advantage of this face in Russian, based strictly on metrics]
@@ -465,7 +524,7 @@ def analyze_face(image_path):
         response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "user", "content": build_prompt(metrics)}
+                {"role": "user", "content": build_prompt(metrics, scores)}
             ],
             temperature=0.3
         )
