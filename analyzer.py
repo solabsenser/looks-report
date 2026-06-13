@@ -205,27 +205,24 @@ def calculate_face_metrics(image_path):
     jaw_ratio = jaw_width / face_width
     eye_spacing_ratio = eye_spacing / face_width
 
-print({
-    "face_ratio": round(face_ratio, 2),
-    "symmetry": symmetry,
-    "brightness": brightness,
-    "sharpness": round(sharpness, 1),
-    "canthal_tilt": round(canthal_tilt, 2),
-    "nose_ratio": round(nose_ratio, 3),
-    "mouth_ratio": round(mouth_ratio, 3),
-    "jaw_ratio": round(jaw_ratio, 3),
-    "eye_spacing_ratio": round(eye_spacing_ratio, 3)
-})
+    print({
+        "face_ratio": round(face_ratio, 2),
+        "symmetry": symmetry,
+        "brightness": brightness,
+        "sharpness": round(sharpness, 1),
+        "canthal_tilt": round(canthal_tilt, 2),
+        "nose_ratio": round(nose_ratio, 3),
+        "mouth_ratio": round(mouth_ratio, 3),
+        "jaw_ratio": round(jaw_ratio, 3),
+        "eye_spacing_ratio": round(eye_spacing_ratio, 3)
+    })
 
     return {
         "face_ratio": round(face_ratio, 2),
         "symmetry": symmetry,
         "brightness": brightness,
-
         "sharpness": round(sharpness, 1),
-
         "canthal_tilt": round(canthal_tilt, 2),
-
         "nose_ratio": round(nose_ratio, 3),
         "mouth_ratio": round(mouth_ratio, 3),
         "jaw_ratio": round(jaw_ratio, 3),
