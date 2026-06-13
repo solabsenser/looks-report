@@ -490,6 +490,36 @@ If nose score is high, treat the nose as a strength.
 
 If jaw score is moderate, describe it neutrally.
 
+LANGUAGE LOCK
+
+Write ONLY in Russian.
+
+English words are forbidden.
+
+English sentences are forbidden.
+
+If you output any English text,
+you are violating instructions.
+
+All positives, negatives and recommendations
+must be written in Russian.
+
+RECOMMENDATION RULES
+
+Recommendations must be practical.
+
+Do not repeat metrics.
+
+Do not explain scores.
+
+Provide actionable advice.
+
+Bad example:
+"Consider the facial thirds ratio."
+
+Good example:
+"Используйте фото строго анфас для более точного анализа."
+
 =====================
 OUTPUT FORMAT
 =====================
