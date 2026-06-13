@@ -325,8 +325,8 @@ def calculate_scores(metrics):
     ideal_jaw = 0.82
 
     jaw_score = (
-        10 -
-        abs(jaw_ratio - ideal_jaw) * 25
+        7.0 -
+        abs(jaw_ratio - ideal_jaw) * 12
     )
 
     jaw_score = clamp(jaw_score)
