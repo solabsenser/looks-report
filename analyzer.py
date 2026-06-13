@@ -159,7 +159,18 @@ def calculate_face_metrics(image_path):
         gray,
         cv2.CV_64F
     ).var()
-
+    
+    if sharpness > 200:
+        image_quality = 10.0
+    elif sharpness > 100:
+        image_quality = 8.0
+    elif sharpness > 50:
+        image_quality = 6.0
+    elif sharpness > 20:
+        image_quality = 4.0
+    else:
+        image_quality = 2.0
+        
 # Canthal Tilt
     canthal_tilt = math.degrees(
         math.atan2(
@@ -221,8 +232,12 @@ def calculate_face_metrics(image_path):
         "face_ratio": round(face_ratio, 2),
         "symmetry": symmetry,
         "brightness": brightness,
+
         "sharpness": round(sharpness, 1),
+        "image_quality": image_quality,
+
         "canthal_tilt": round(canthal_tilt, 2),
+
         "nose_ratio": round(nose_ratio, 3),
         "mouth_ratio": round(mouth_ratio, 3),
         "jaw_ratio": round(jaw_ratio, 3),
