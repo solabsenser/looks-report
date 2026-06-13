@@ -74,6 +74,10 @@ def detect_face_landmarks(rgb_image):
 
     return results.face_landmarks[0]
 
+def landmark_distance(lm1, lm2, w, h):
+    dx = (lm1.x - lm2.x) * w
+    dy = (lm1.y - lm2.y) * h
+    return math.sqrt(dx * dx + dy * dy)
 
 def calculate_face_metrics(image_path):
     image = cv2.imread(image_path)
@@ -149,11 +153,83 @@ def calculate_face_metrics(image_path):
     # Яркость
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     brightness = round(gray.mean(), 1)
+    
+# Резкость фото
+    sharpness = cv2.Laplacian(
+        gray,
+        cv2.CV_64F
+    ).var()
+
+# Canthal Tilt
+    canthal_tilt = math.degrees(
+        math.atan2(
+            -(right_eye_y - left_eye_y),
+            (right_eye_x - left_eye_x)
+        )
+    )
+
+# Ширина носа
+    nose_width = landmark_distance(
+        landmarks[129],
+        landmarks[358],
+        w,
+        h
+    )
+
+# Ширина рта
+    mouth_width = landmark_distance(
+        landmarks[61],
+        landmarks[291],
+        w,
+        h
+    )
+
+# Ширина челюсти
+    jaw_width = landmark_distance(
+        landmarks[172],
+        landmarks[397],
+        w,
+        h
+    )
+
+# Расстояние между глазами
+    eye_spacing = landmark_distance(
+        landmarks[133],
+        landmarks[362],
+        w,
+        h
+    )
+
+    nose_ratio = nose_width / face_width
+    mouth_ratio = mouth_width / face_width
+    jaw_ratio = jaw_width / face_width
+    eye_spacing_ratio = eye_spacing / face_width
+
+print({
+    "face_ratio": round(face_ratio, 2),
+    "symmetry": symmetry,
+    "brightness": brightness,
+    "sharpness": round(sharpness, 1),
+    "canthal_tilt": round(canthal_tilt, 2),
+    "nose_ratio": round(nose_ratio, 3),
+    "mouth_ratio": round(mouth_ratio, 3),
+    "jaw_ratio": round(jaw_ratio, 3),
+    "eye_spacing_ratio": round(eye_spacing_ratio, 3)
+})
 
     return {
         "face_ratio": round(face_ratio, 2),
         "symmetry": symmetry,
-        "brightness": brightness
+        "brightness": brightness,
+
+        "sharpness": round(sharpness, 1),
+
+        "canthal_tilt": round(canthal_tilt, 2),
+
+        "nose_ratio": round(nose_ratio, 3),
+        "mouth_ratio": round(mouth_ratio, 3),
+        "jaw_ratio": round(jaw_ratio, 3),
+        "eye_spacing_ratio": round(eye_spacing_ratio, 3)
     }
 
 def build_prompt(metrics):
