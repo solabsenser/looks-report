@@ -238,7 +238,31 @@ def calculate_face_metrics(image_path):
     mouth_ratio = mouth_width / face_width_reference
     jaw_ratio = jaw_width / face_width_reference
     eye_spacing_ratio = eye_spacing / eye_width_reference
+    
+    # Face Shape
+    if face_ratio >= 1.55:
+        face_shape = "Rectangle"
+    elif face_ratio >= 1.40:
+        face_shape = "Oval"
+    elif face_ratio >= 1.25:
+        face_shape = "Round"
+    else:
+        face_shape = "Square"
 
+    # Facial Thirds
+    forehead_point = landmarks[10]
+    nose_base_point = landmarks[2]
+    chin_point = landmarks[152]
+
+    upper_third = abs(
+        nose_base_point.y - forehead_point.y
+    )
+
+    lower_third = abs(
+        chin_point.y - nose_base_point.y
+    )
+
+    thirds_ratio = upper_third / max(lower_third, 0.001)
     print({
         "face_ratio": round(face_ratio, 2),
         "symmetry": symmetry,
@@ -249,6 +273,8 @@ def calculate_face_metrics(image_path):
         "mouth_ratio": round(mouth_ratio, 3),
         "jaw_ratio": round(jaw_ratio, 3),
         "eye_spacing_ratio": round(eye_spacing_ratio, 3)
+        "face_shape": face_shape,
+        "thirds_ratio": round(thirds_ratio, 2),
     })
 
     return {
@@ -265,6 +291,8 @@ def calculate_face_metrics(image_path):
         "mouth_ratio": round(mouth_ratio, 3),
         "jaw_ratio": round(jaw_ratio, 3),
         "eye_spacing_ratio": round(eye_spacing_ratio, 3)
+        "face_shape": face_shape,
+        "thirds_ratio": round(thirds_ratio, 2),
     }
 
 def clamp(value, min_value=0.0, max_value=10.0):
