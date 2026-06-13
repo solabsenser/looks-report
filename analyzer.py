@@ -272,7 +272,7 @@ def calculate_face_metrics(image_path):
         "nose_ratio": round(nose_ratio, 3),
         "mouth_ratio": round(mouth_ratio, 3),
         "jaw_ratio": round(jaw_ratio, 3),
-        "eye_spacing_ratio": round(eye_spacing_ratio, 3)
+        "eye_spacing_ratio": round(eye_spacing_ratio, 3),
         "face_shape": face_shape,
         "thirds_ratio": round(thirds_ratio, 2),
     })
@@ -290,7 +290,7 @@ def calculate_face_metrics(image_path):
         "nose_ratio": round(nose_ratio, 3),
         "mouth_ratio": round(mouth_ratio, 3),
         "jaw_ratio": round(jaw_ratio, 3),
-        "eye_spacing_ratio": round(eye_spacing_ratio, 3)
+        "eye_spacing_ratio": round(eye_spacing_ratio, 3),
         "face_shape": face_shape,
         "thirds_ratio": round(thirds_ratio, 2),
     }
