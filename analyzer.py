@@ -707,7 +707,13 @@ def analyze_face(image_path):
 
         print("METRICS:", metrics)
         print("SCORES:", scores)
-
+        print(
+            "FACE DIMENSIONS:",
+            face_height,
+            face_width_reference,
+            face_ratio
+        )
+        
         # Вызов Groq API
         response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
