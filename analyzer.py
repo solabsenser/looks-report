@@ -79,6 +79,48 @@ def landmark_distance(lm1, lm2, w, h):
     dy = (lm1.y - lm2.y) * h
     return math.sqrt(dx * dx + dy * dy)
 
+def calculate_head_pose(landmarks, w, h):
+
+    left_eye = landmarks[33]
+    right_eye = landmarks[263]
+
+    nose = landmarks[1]
+
+    left_eye_x = left_eye.x * w
+    left_eye_y = left_eye.y * h
+
+    right_eye_x = right_eye.x * w
+    right_eye_y = right_eye.y * h
+
+    nose_x = nose.x * w
+
+    # Roll (наклон головы)
+
+    roll = math.degrees(
+        math.atan2(
+            right_eye_y - left_eye_y,
+            right_eye_x - left_eye_x
+        )
+    )
+
+    # Yaw (поворот влево-вправо)
+
+    eye_center_x = (
+        left_eye_x +
+        right_eye_x
+    ) / 2
+
+    yaw = (
+        (nose_x - eye_center_x)
+        /
+        abs(right_eye_x - left_eye_x)
+    ) * 100
+
+    return {
+        "roll": round(roll, 2),
+        "yaw": round(yaw, 2)
+    }
+    
 def calculate_face_metrics(image_path):
     image = cv2.imread(image_path)
     if image is None:
@@ -90,7 +132,13 @@ def calculate_face_metrics(image_path):
 
     if landmarks is None:
         return None
-
+        
+    head_pose = calculate_head_pose(
+        landmarks,
+        w,
+        h
+    )
+    
     # Перевод ключевых точек в пиксели
     left_eye_x, left_eye_y = landmarks[33].x * w, landmarks[33].y * h
     right_eye_x, right_eye_y = landmarks[263].x * w, landmarks[263].y * h
@@ -270,6 +318,8 @@ def calculate_face_metrics(image_path):
         "eye_spacing_ratio": round(eye_spacing_ratio, 3),
         "face_shape": face_shape,
         "thirds_ratio": round(thirds_ratio, 2),
+        "head_roll": head_pose["roll"],
+        "head_yaw": head_pose["yaw"],
     })
 
     return {
@@ -288,6 +338,8 @@ def calculate_face_metrics(image_path):
         "eye_spacing_ratio": round(eye_spacing_ratio, 3),
         "face_shape": face_shape,
         "thirds_ratio": round(thirds_ratio, 2),
+        "head_roll": head_pose["roll"],
+        "head_yaw": head_pose["yaw"],
     }
 
 def clamp(value, min_value=0.0, max_value=10.0):
