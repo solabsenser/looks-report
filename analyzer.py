@@ -120,6 +120,52 @@ def calculate_head_pose(landmarks, w, h):
         "roll": round(roll, 2),
         "yaw": round(yaw, 2)
     }
+
+def calculate_confidence(metrics):
+
+    confidence = 100
+
+    # Качество фото
+
+    sharpness = metrics["sharpness"]
+
+    if sharpness < 20:
+        confidence -= 20
+
+    elif sharpness < 50:
+        confidence -= 10
+
+    # Яркость
+
+    brightness = metrics["brightness"]
+
+    if brightness < 50:
+        confidence -= 15
+
+    elif brightness < 80:
+        confidence -= 5
+
+    # Наклон головы
+
+    roll = abs(metrics["head_roll"])
+
+    if roll > 10:
+        confidence -= 15
+
+    elif roll > 5:
+        confidence -= 5
+
+    # Поворот головы
+
+    yaw = abs(metrics["head_yaw"])
+
+    if yaw > 15:
+        confidence -= 15
+
+    elif yaw > 8:
+        confidence -= 5
+
+    return max(0, min(100, round(confidence)))
     
 def calculate_face_metrics(image_path):
     image = cv2.imread(image_path)
@@ -395,7 +441,8 @@ def calculate_scores(metrics):
 
     # Качество фото
     image_score = metrics["image_quality"]
-
+    confidence = calculate_confidence(metrics)
+    
     overall_score = (
         symmetry_score * 0.30 +
         proportion_score * 0.15 +
@@ -413,6 +460,7 @@ def calculate_scores(metrics):
         "eye_score": round(eye_score, 1),
         "nose_score": round(nose_score, 1),
         "jaw_score": round(jaw_score, 1),
+        "confidence": confidence,
         "overall_score": round(overall_score, 1)
     }
 
