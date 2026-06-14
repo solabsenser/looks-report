@@ -707,12 +707,6 @@ def analyze_face(image_path):
 
         print("METRICS:", metrics)
         print("SCORES:", scores)
-        print(
-            "FACE DIMENSIONS:",
-            round(face_height, 2),
-            round(face_width_reference, 2),
-            round(face_ratio, 2)
-        )
         
         # Вызов Groq API
         response = groq_client.chat.completions.create(
