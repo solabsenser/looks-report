@@ -709,9 +709,9 @@ def analyze_face(image_path):
         print("SCORES:", scores)
         print(
             "FACE DIMENSIONS:",
-            face_height,
-            face_width_reference,
-            face_ratio
+            round(face_height, 2),
+            round(face_width_reference, 2),
+            round(face_ratio, 2)
         )
         
         # Вызов Groq API
