@@ -432,10 +432,29 @@ def calculate_scores(metrics):
     
     # Глаза
     eye_spacing = metrics["eye_spacing_ratio"]
+    canthal_tilt = metrics["canthal_tilt"]
 
-    eye_score = 10 - abs(eye_spacing - 0.38) * 40
+    spacing_score = (
+        10 -
+        abs(eye_spacing - 0.38) * 40
+    )
+
+    spacing_score = clamp(spacing_score)
+
+    tilt_score = (
+        8 -
+        abs(canthal_tilt - 4) * 0.5
+    )
+
+    tilt_score = clamp(tilt_score)
+
+    eye_score = (
+        spacing_score * 0.7 +
+        tilt_score * 0.3
+    )
+
     eye_score = clamp(eye_score)
-
+    
     # Нос
     nose_ratio = metrics["nose_ratio"]
 
