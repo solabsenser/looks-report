@@ -328,15 +328,28 @@ def calculate_face_metrics(image_path):
     jaw_ratio = jaw_width / face_width_reference
     eye_spacing_ratio = eye_spacing / eye_width_reference
     
-    # Face Shape
-    if face_ratio >= 1.55:
-        face_shape = "Rectangle"
-    elif face_ratio >= 1.40:
-        face_shape = "Oval"
-    elif face_ratio >= 1.25:
-        face_shape = "Round"
+# Face Shape (V2)
+
+    if face_ratio < 1.25:
+
+        if jaw_ratio >= 0.80:
+            face_shape = "Square"
+        else:
+            face_shape = "Round"
+
+    elif face_ratio < 1.45:
+
+        if jaw_ratio >= 0.78:
+            face_shape = "Square-Oval"
+        else:
+            face_shape = "Oval"
+
     else:
-        face_shape = "Square"
+
+        if jaw_ratio >= 0.80:
+            face_shape = "Rectangle"
+        else:
+            face_shape = "Oblong"
 
     # Facial Thirds
     forehead_point = landmarks[10]
