@@ -379,6 +379,8 @@ def calculate_face_metrics(image_path):
         "thirds_ratio": round(thirds_ratio, 2),
         "head_roll": head_pose["roll"],
         "head_yaw": head_pose["yaw"],
+        "face_shape_reason":
+            f"ratio={round(face_ratio,2)}, jaw={round(jaw_ratio,2)}",
     })
 
     return {
@@ -702,6 +704,7 @@ def analyze_face(image_path):
 📊 <b>FACE ANALYSIS REPORT</b>
 
 ⭐ <b>Overall Rating (Appeal):</b> {scores['overall_score']}/10
+📊 <b>Достоверность анализа:</b> {scores['confidence']}%
 
 👁 <b>Симметрия лица (PSL):</b> {scores['symmetry_score']}/10
 📏 <b>Пропорции лица:</b> {scores['proportion_score']}/10
