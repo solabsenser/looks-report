@@ -1,5 +1,6 @@
 import os
 import re
+import traceback
 from pathlib import Path
 from threading import Lock
 from urllib.request import urlretrieve
@@ -916,8 +917,6 @@ def analyze_face(image_path):
             "score": scores["overall_score"],
             "report": report
         }
-
-import traceback
 
     except Exception as e:
         print(traceback.format_exc())
