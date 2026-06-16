@@ -581,8 +581,8 @@ def calculate_scores(metrics):
     thirds_ratio = metrics["thirds_ratio"]
 
     thirds_score = (
-        8 -
-        abs(thirds_ratio - 1.0) * 10
+        10 -
+        abs(thirds_ratio - 1.00) * 9
     )
 
     thirds_score = clamp(thirds_score)
@@ -721,7 +721,7 @@ def calculate_scores(metrics):
 
     proportion_score = (
         10 -
-        abs(face_ratio - 1.50) * 10
+        abs(face_ratio - 1.60) * 10
     )
 
     proportion_score = clamp(
