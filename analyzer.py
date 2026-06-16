@@ -382,7 +382,8 @@ def calculate_face_metrics(image_path):
         landmarks[374],
         w, h
     )
-
+    
+    # ====== ПЕРЕМЕННЫЕ ======
     eye_width = (
         left_eye_width +
         right_eye_width
@@ -393,7 +394,16 @@ def calculate_face_metrics(image_path):
         right_eye_height
     ) / 2
 
-    # ====== ПЕРЕМЕННЫЕ ======
+    eye_width_ratio = (
+        eye_width /
+        face_width_reference
+    )
+
+    eye_height_ratio = (
+        eye_height /
+        face_width_reference
+    )
+
     nose_ratio = nose_width / face_width_reference
     mouth_ratio = mouth_width / face_width_reference
     jaw_ratio = jaw_width / face_width_reference
