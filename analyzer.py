@@ -917,13 +917,14 @@ def analyze_face(image_path):
             "report": report
         }
 
+import traceback
+
     except Exception as e:
+        print(traceback.format_exc())
+
         return {
             "score": 0,
-            "report": (
-                "❌ Ошибка анализа изображения.\n\n"
-                f"Детали: {str(e)}"
-            )
+            "report": f"❌ Ошибка анализа изображения.\n\nДетали: {e}"
         }
 
 
