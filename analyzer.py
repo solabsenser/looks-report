@@ -244,7 +244,7 @@ def calculate_face_metrics(image_path):
     total_deviation += abs(nose_x_opt) * 2
 
     # АДАПТИВНАЯ НОРМАЛИЗАЦИЯ И «АНТИ-ИНФЛЯЦИЯ»
-    raw_error = total_deviation / eye_width_reference
+    raw_error = total_deviation / (face_width_reference * 0.6)
 
     scale_multiplier = (
         0.70 if eye_width_reference > 200
@@ -252,7 +252,10 @@ def calculate_face_metrics(image_path):
     )
     
     # Считаем сырой балл
-    raw_score = max(0.0, (1.0 - (raw_error * scale_multiplier)) * 10)
+    raw_score = max(
+        0.0,
+        (1.0 - raw_error * scale_multiplier * 2.0) * 10
+    )
     
     print("RAW_ERROR:", raw_error)
     print("RAW_SCORE:", raw_score)
