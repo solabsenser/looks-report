@@ -30,7 +30,7 @@ ANALYZER_BACKEND = "mediapipe-tasks-face-landmarker-v2 + Groq Llama3"
 if not GROQ_API_KEY:
     raise ValueError("GROQ_API_KEY not found in .env")
 
-# Инициализируем клиент Groq
+# Инициализируем клиент Groqа
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 
