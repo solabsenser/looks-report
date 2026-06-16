@@ -251,6 +251,9 @@ def calculate_face_metrics(image_path):
         else 0.25
     )
     
+    print("RAW_ERROR:", raw_error)
+    print("RAW_SCORE:", raw_score)
+    
     # Считаем сырой балл
     raw_score = max(0.0, (1.0 - (raw_error * scale_multiplier)) * 10)
     
