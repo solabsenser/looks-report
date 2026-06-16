@@ -829,6 +829,16 @@ Never use words:
 
 unless score >= 9.0.
 
+If a feature score is below 7.5,
+it cannot be described as a major strength.
+
+If a feature score is below 9.0,
+never use:
+- ideal
+- near ideal
+- exceptional
+- outstanding
+
 =====================
 IMPORTANT RULES
 =====================
