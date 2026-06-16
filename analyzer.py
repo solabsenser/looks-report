@@ -456,6 +456,11 @@ def calculate_face_metrics(image_path):
         "head_yaw": head_pose["yaw"],
         "face_shape_reason":
             f"ratio={round(face_ratio,2)}, jaw={round(jaw_ratio,2)}",
+        "eye_width_ratio": round(eye_width_ratio, 3),
+        "eye_height_ratio": round(eye_height_ratio, 3),
+        "eye_aspect_ratio": round(eye_aspect_ratio, 3),
+        "nose_length_ratio": round(nose_length_ratio, 3),
+        "jaw_to_cheek_ratio": round(jaw_to_cheek_ratio, 3),
     })
 
     return {
@@ -478,6 +483,7 @@ def calculate_face_metrics(image_path):
         "head_yaw": head_pose["yaw"],
         "eye_width_ratio": round(eye_width_ratio, 3),
         "eye_height_ratio": round(eye_height_ratio, 3),
+        "eye_aspect_ratio": round(eye_aspect_ratio, 3),
         "nose_length_ratio": round(nose_length_ratio, 3),
         "jaw_to_cheek_ratio": round(jaw_to_cheek_ratio, 3)
     }
