@@ -839,6 +839,31 @@ never use:
 - exceptional
 - outstanding
 
+POSITIVE SELECTION RULES
+
+List a feature as a positive ONLY if score >= 7.5.
+
+NEGATIVE SELECTION RULES
+
+List a feature as a negative ONLY if score <= 6.0.
+
+Scores between 6.0 and 7.5 are neutral.
+
+Neutral features must not appear in positives.
+
+Neutral features must not appear in negatives.
+
+The positives and negatives MUST be selected from the scores.
+
+Do not invent strengths.
+
+Do not invent weaknesses.
+
+If there are not enough weaknesses,
+write:
+
+"Явных слабых сторон по доступным метрикам не обнаружено."
+
 =====================
 IMPORTANT RULES
 =====================
