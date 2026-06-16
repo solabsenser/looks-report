@@ -557,7 +557,7 @@ def calculate_scores(metrics):
     # ===== nose_alignment ======
     nose_alignment_score = (
         8 -
-        nose_dev * 120
+        nose_dev * 80
     )
 
     nose_alignment_score = clamp(
@@ -567,7 +567,7 @@ def calculate_scores(metrics):
     # ===== CHIN ALIGNMENT =====
     chin_alignment_score = (
         8 -
-        chin_dev * 120
+        chin_dev * 80
     )
 
     chin_alignment_score = clamp(
@@ -718,6 +718,15 @@ def calculate_scores(metrics):
     # =====================
 
     face_ratio = metrics["face_ratio"]
+
+    proportion_score = (
+        10 -
+        abs(face_ratio - 1.50) * 10
+    )
+
+    proportion_score = clamp(
+        proportion_score
+    )
 
     proportion_score = (
         proportion_score * 0.7 +
