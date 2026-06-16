@@ -247,8 +247,8 @@ def calculate_face_metrics(image_path):
     raw_error = total_deviation / eye_width_reference
 
     scale_multiplier = (
-        0.35 if eye_width_reference > 200
-        else 0.25
+        0.70 if eye_width_reference > 200
+        else 0.50
     )
     
     # Считаем сырой балл
