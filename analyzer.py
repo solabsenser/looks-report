@@ -637,14 +637,6 @@ def calculate_scores(metrics):
 
     jaw_structure_score = clamp(jaw_structure_score)
 
-    jaw_score = (
-        jaw_width_score * 0.4 +
-        jaw_structure_score * 0.4 +
-        chin_score * 0.2
-    )
-
-    jaw_score = clamp(jaw_score)
-
     #====== ПОДБОРОДОК =======
     chin_ratio = metrics["chin_ratio"]
 
@@ -654,6 +646,15 @@ def calculate_scores(metrics):
     )
 
     chin_score = clamp(chin_score)
+
+    # ==== ИТОГ ЧЕЛЮСТИ =====
+    jaw_score = (
+        jaw_width_score * 0.4 +
+        jaw_structure_score * 0.4 +
+        chin_score * 0.2
+    )
+
+    jaw_score = clamp(jaw_score)
     
     # =====================
     # КАЧЕСТВО ФОТО
