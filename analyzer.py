@@ -330,7 +330,7 @@ def calculate_face_metrics(image_path):
         landmarks[152],
         w, h
     )
-    
+
     #==== СКУЛЫ =====
     cheekbone_width = landmark_distance(
         landmarks[234],
@@ -475,6 +475,7 @@ def calculate_face_metrics(image_path):
         "eye_aspect_ratio": round(eye_aspect_ratio, 3),
         "nose_length_ratio": round(nose_length_ratio, 3),
         "jaw_to_cheek_ratio": round(jaw_to_cheek_ratio, 3),
+        "chin_ratio": round(chin_ratio, 3),
     })
 
     return {
@@ -499,7 +500,8 @@ def calculate_face_metrics(image_path):
         "eye_height_ratio": round(eye_height_ratio, 3),
         "eye_aspect_ratio": round(eye_aspect_ratio, 3),
         "nose_length_ratio": round(nose_length_ratio, 3),
-        "jaw_to_cheek_ratio": round(jaw_to_cheek_ratio, 3)
+        "jaw_to_cheek_ratio": round(jaw_to_cheek_ratio, 3),
+        "chin_ratio": round(chin_ratio, 3),
     }
 
 def clamp(value, min_value=0.0, max_value=10.0):
@@ -636,12 +638,23 @@ def calculate_scores(metrics):
     jaw_structure_score = clamp(jaw_structure_score)
 
     jaw_score = (
-        jaw_width_score * 0.5 +
-        jaw_structure_score * 0.5
+        jaw_width_score * 0.4 +
+        jaw_structure_score * 0.4 +
+        chin_score * 0.2
     )
 
     jaw_score = clamp(jaw_score)
 
+    #====== ПОДБОРОДОК =======
+    chin_ratio = metrics["chin_ratio"]
+
+    chin_score = (
+        8 -
+        abs(chin_ratio - 0.18) * 50
+    )
+
+    chin_score = clamp(chin_score)
+    
     # =====================
     # КАЧЕСТВО ФОТО
     # =====================
@@ -673,6 +686,7 @@ def calculate_scores(metrics):
         "eye_score": round(eye_score, 1),
         "nose_score": round(nose_score, 1),
         "jaw_score": round(jaw_score, 1),
+        "chin_score": round(chin_score, 1),
         "confidence": confidence,
         "overall_score": round(overall_score, 1)
     }
