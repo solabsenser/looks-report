@@ -298,7 +298,7 @@ def calculate_face_metrics(image_path):
         )
     )
 
-# Ширина носа
+    # ===== НОС =======
     nose_width = landmark_distance(
         landmarks[129],
         landmarks[358],
@@ -312,7 +312,18 @@ def calculate_face_metrics(image_path):
         w, h
     )
 
-# Ширина рта
+    face_center_x = (
+        landmarks[234].x * w +
+        landmarks[454].x * w
+    ) / 2
+
+    nose_center_x = landmarks[1].x * w
+
+    nose_deviation = abs(
+        nose_center_x - face_center_x
+    ) / face_width_reference
+
+    # ===== РОТ ======= 
     mouth_width = landmark_distance(
         landmarks[61],
         landmarks[291],
@@ -333,6 +344,13 @@ def calculate_face_metrics(image_path):
         landmarks[152],
         w, h
     )
+    
+    # ==== ПОДБОРОДОК ======
+    chin_center_x = landmarks[152].x * w
+
+    chin_deviation = abs(
+        chin_center_x - face_center_x
+    ) / face_width_reference
 
     #==== СКУЛЫ =====
     cheekbone_width = landmark_distance(
@@ -443,7 +461,7 @@ def calculate_face_metrics(image_path):
         else:
             face_shape = "Oblong"
 
-    # Facial Thirds
+    # ==== Facial Thirds =====
     forehead_point = landmarks[10]
     nose_base_point = landmarks[2]
     chin_point = landmarks[152]
@@ -454,6 +472,11 @@ def calculate_face_metrics(image_path):
 
     lower_third = abs(
         chin_point.y - nose_base_point.y
+    )
+    # ==== Facial fifth =====
+    facial_fifths_ratio = (
+        eye_spacing /
+        face_width_reference
     )
 
     thirds_ratio = upper_third / max(lower_third, 0.001)
@@ -479,6 +502,9 @@ def calculate_face_metrics(image_path):
         "nose_length_ratio": round(nose_length_ratio, 3),
         "jaw_to_cheek_ratio": round(jaw_to_cheek_ratio, 3),
         "chin_ratio": round(chin_ratio, 3),
+        "nose_deviation": round(nose_deviation, 3),
+        "chin_deviation": round(chin_deviation, 3),
+        "facial_fifths_ratio": round(facial_fifths_ratio, 3),
     })
 
     return {
@@ -505,6 +531,9 @@ def calculate_face_metrics(image_path):
         "nose_length_ratio": round(nose_length_ratio, 3),
         "jaw_to_cheek_ratio": round(jaw_to_cheek_ratio, 3),
         "chin_ratio": round(chin_ratio, 3),
+        "nose_deviation": round(nose_deviation, 3),
+        "chin_deviation": round(chin_deviation, 3),
+        "facial_fifths_ratio": round(facial_fifths_ratio, 3),
     }
 
 def clamp(value, min_value=0.0, max_value=10.0):
@@ -513,24 +542,37 @@ def clamp(value, min_value=0.0, max_value=10.0):
 
 def calculate_scores(metrics):
 
-    # =====================
-    # СИММЕТРИЯ
-    # =====================
+    # ===== FACIAL FIFTH ======
+    nose_dev = metrics["nose_deviation"]
+    chin_dev = metrics["chin_deviation"]
+    fifths = metrics["facial_fifths_ratio"]
 
-    symmetry_score = metrics["symmetry"]
-
-    # =====================
-    # ОБЩИЕ ПРОПОРЦИИ
-    # =====================
-
-    face_ratio = metrics["face_ratio"]
-
-    proportion_score = (
-        10 -
-        abs(face_ratio - 1.50) * 10
+    fifths_score = (
+        8 -
+        abs(fifths - 0.30) * 25
     )
 
-    proportion_score = clamp(proportion_score)
+    fifths_score = clamp(fifths_score)
+
+    # ===== nose_alignment ======
+    nose_alignment_score = (
+        8 -
+        nose_dev * 120
+    )
+
+    nose_alignment_score = clamp(
+        nose_alignment_score
+    )
+    
+    # ===== CHIN ALIGNMENT =====
+    chin_alignment_score = (
+        8 -
+        chin_dev * 120
+    )
+
+    chin_alignment_score = clamp(
+        chin_alignment_score
+    )
 
     # =====================
     # ВЕРТИКАЛЬНЫЕ ТРЕТИ
@@ -658,6 +700,33 @@ def calculate_scores(metrics):
     )
 
     jaw_score = clamp(jaw_score)
+
+    # =====================
+    # СИММЕТРИЯ
+    # =====================
+
+    symmetry_score = (
+        metrics["symmetry"] * 0.6 +
+        nose_alignment_score * 0.2 +
+        chin_alignment_score * 0.2
+    )
+
+    symmetry_score = clamp(symmetry_score)
+
+    # =====================
+    # ОБЩИЕ ПРОПОРЦИИ
+    # =====================
+
+    face_ratio = metrics["face_ratio"]
+
+    proportion_score = (
+        proportion_score * 0.7 +
+        fifths_score * 0.3
+    )
+
+    proportion_score = clamp(
+        proportion_score
+    )
     
     # =====================
     # КАЧЕСТВО ФОТО
@@ -692,7 +761,10 @@ def calculate_scores(metrics):
         "jaw_score": round(jaw_score, 1),
         "chin_score": round(chin_score, 1),
         "confidence": confidence,
-        "overall_score": round(overall_score, 1)
+        "overall_score": round(overall_score, 1),
+        "fifths_score": round(fifths_score, 1),
+        "nose_alignment_score": round(nose_alignment_score, 1),
+        "chin_alignment_score": round(chin_alignment_score, 1),
     }
 
 def get_tier(score):
