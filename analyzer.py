@@ -299,6 +299,12 @@ def calculate_face_metrics(image_path):
         h
     )
 
+    nose_length = landmark_distance(
+        landmarks[168],
+        landmarks[2],
+        w, h
+    )
+
 # Ширина рта
     mouth_width = landmark_distance(
         landmarks[61],
@@ -307,7 +313,7 @@ def calculate_face_metrics(image_path):
         h
     )
 
-# Ширина челюсти
+    # ===== ЧЕЛЮСТЬ =======
     jaw_width = landmark_distance(
         landmarks[172],
         landmarks[397],
@@ -315,18 +321,87 @@ def calculate_face_metrics(image_path):
         h
     )
 
-# Расстояние между глазами
+    chin_height = landmark_distance(
+        landmarks[18],
+        landmarks[152],
+        w, h
+    )
+    
+    #==== СКУЛЫ =====
+    cheekbone_width = landmark_distance(
+        landmarks[234],
+        landmarks[454],
+        w, h
+    )
+    
+    # ======= ГУБЫ ========
+    upper_lip = landmark_distance(
+        landmarks[13],
+        landmarks[0],
+        w, h
+    )
+
+    lower_lip = landmark_distance(
+        landmarks[14],
+        landmarks[17],
+        w, h
+    )
+
+    # ====== ГЛАЗА =======
     eye_spacing = landmark_distance(
         landmarks[133],
         landmarks[362],
         w,
         h
     )
+    
+    left_eye_width = landmark_distance(
+        landmarks[33],
+        landmarks[133],
+        w, h
+    )
 
+    right_eye_width = landmark_distance(
+        landmarks[362],
+        landmarks[263],
+        w, h
+    )
+
+    eye_width_ratio = (
+        (left_eye_width + right_eye_width) / 2
+    ) / face_width_reference
+
+    left_eye_height = landmark_distance(
+        landmarks[159],
+        landmarks[145],
+        w, h
+    )
+
+    right_eye_height = landmark_distance(
+        landmarks[386],
+        landmarks[374],
+        w, h
+    )
+
+    eye_width = (
+        left_eye_width +
+        right_eye_width
+    ) / 2
+
+    eye_height = (
+        left_eye_height +
+        right_eye_height
+    ) / 2
+
+    # ====== ПЕРЕМЕННЫЕ ======
     nose_ratio = nose_width / face_width_reference
     mouth_ratio = mouth_width / face_width_reference
     jaw_ratio = jaw_width / face_width_reference
     eye_spacing_ratio = eye_spacing / eye_width_reference
+    eye_aspect_ratio = eye_width / eye_height
+    nose_length_ratio = nose_length / face_height
+    chin_ratio = chin_height / face_height
+    jaw_to_cheek_ratio = jaw_width / cheekbone_width
     
 # Face Shape (V2)
 
@@ -401,6 +476,10 @@ def calculate_face_metrics(image_path):
         "thirds_ratio": round(thirds_ratio, 2),
         "head_roll": head_pose["roll"],
         "head_yaw": head_pose["yaw"],
+        "eye_width_ratio": round(eye_width_ratio, 3),
+        "eye_height_ratio": round(eye_height_ratio, 3),
+        "nose_length_ratio": round(nose_length_ratio, 3),
+        "jaw_to_cheek_ratio": round(jaw_to_cheek_ratio, 3)
     }
 
 def clamp(value, min_value=0.0, max_value=10.0):
@@ -409,18 +488,29 @@ def clamp(value, min_value=0.0, max_value=10.0):
 
 def calculate_scores(metrics):
 
-    # Симметрия уже готова
+    # =====================
+    # СИММЕТРИЯ
+    # =====================
+
     symmetry_score = metrics["symmetry"]
 
-    # Пропорции лица
-    ratio = metrics["face_ratio"]
+    # =====================
+    # ОБЩИЕ ПРОПОРЦИИ
+    # =====================
 
-    ideal_ratio = 1.55
+    face_ratio = metrics["face_ratio"]
 
-    proportion_score = 10 - abs(ratio - ideal_ratio) * 12
+    proportion_score = (
+        10 -
+        abs(face_ratio - 1.50) * 10
+    )
+
     proportion_score = clamp(proportion_score)
 
-    # Вертикальные трети лица
+    # =====================
+    # ВЕРТИКАЛЬНЫЕ ТРЕТИ
+    # =====================
+
     thirds_ratio = metrics["thirds_ratio"]
 
     thirds_score = (
@@ -429,63 +519,132 @@ def calculate_scores(metrics):
     )
 
     thirds_score = clamp(thirds_score)
-    
-    # Глаза
+
+    # =====================
+    # ГЛАЗА
+    # =====================
+
     eye_spacing = metrics["eye_spacing_ratio"]
+    eye_width = metrics["eye_width_ratio"]
+    eye_height = metrics["eye_height_ratio"]
     canthal_tilt = metrics["canthal_tilt"]
 
     spacing_score = (
         10 -
-        abs(eye_spacing - 0.38) * 40
+        abs(eye_spacing - 0.38) * 35
     )
 
     spacing_score = clamp(spacing_score)
 
+    width_score = (
+        10 -
+        abs(eye_width - 0.16) * 50
+    )
+
+    width_score = clamp(width_score)
+
+    height_score = (
+        10 -
+        abs(eye_height - 0.045) * 120
+    )
+
+    height_score = clamp(height_score)
+
     tilt_score = (
-        8 -
-        abs(canthal_tilt - 4) * 0.5
+        10 -
+        abs(canthal_tilt - 3.0) * 0.8
     )
 
     tilt_score = clamp(tilt_score)
 
     eye_score = (
-        spacing_score * 0.7 +
-        tilt_score * 0.3
+        spacing_score * 0.35 +
+        width_score * 0.25 +
+        height_score * 0.20 +
+        tilt_score * 0.20
     )
 
     eye_score = clamp(eye_score)
-    
-    # Нос
-    nose_ratio = metrics["nose_ratio"]
 
-    nose_score = 10 - abs(nose_ratio - 0.25) * 25
+    # =====================
+    # НОС
+    # =====================
+
+    nose_width = metrics["nose_ratio"]
+    nose_length = metrics["nose_length_ratio"]
+
+    nose_width_score = (
+        10 -
+        abs(nose_width - 0.28) * 35
+    )
+
+    nose_width_score = clamp(nose_width_score)
+
+    nose_length_score = (
+        10 -
+        abs(nose_length - 0.30) * 35
+    )
+
+    nose_length_score = clamp(nose_length_score)
+
+    nose_score = (
+        nose_width_score * 0.5 +
+        nose_length_score * 0.5
+    )
+
     nose_score = clamp(nose_score)
 
-    # Челюсть
-    jaw_ratio = metrics["jaw_ratio"]
+    # =====================
+    # ЧЕЛЮСТЬ
+    # =====================
 
-    ideal_jaw = 0.82
+    jaw_ratio = metrics["jaw_ratio"]
+    jaw_to_cheek = metrics["jaw_to_cheek_ratio"]
+
+    jaw_width_score = (
+        10 -
+        abs(jaw_ratio - 0.82) * 20
+    )
+
+    jaw_width_score = clamp(jaw_width_score)
+
+    jaw_structure_score = (
+        10 -
+        abs(jaw_to_cheek - 0.85) * 30
+    )
+
+    jaw_structure_score = clamp(jaw_structure_score)
 
     jaw_score = (
-        7.0 -
-        abs(jaw_ratio - ideal_jaw) * 12
+        jaw_width_score * 0.5 +
+        jaw_structure_score * 0.5
     )
 
     jaw_score = clamp(jaw_score)
 
-    # Качество фото
+    # =====================
+    # КАЧЕСТВО ФОТО
+    # =====================
+
     image_score = metrics["image_quality"]
+
     confidence = calculate_confidence(metrics)
-    
+
+    # =====================
+    # ОБЩИЙ БАЛЛ
+    # =====================
+
     overall_score = (
-        symmetry_score * 0.30 +
-        proportion_score * 0.15 +
-        thirds_score * 0.10 +
+        symmetry_score * 0.25 +
+        proportion_score * 0.20 +
+        thirds_score * 0.15 +
         eye_score * 0.15 +
-        jaw_score * 0.20 +
+        jaw_score * 0.15 +
         nose_score * 0.05 +
         image_score * 0.05
     )
+
+    overall_score = clamp(overall_score)
 
     return {
         "symmetry_score": round(symmetry_score, 1),
