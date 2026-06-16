@@ -547,29 +547,29 @@ def calculate_scores(metrics):
     canthal_tilt = metrics["canthal_tilt"]
 
     spacing_score = (
-        10 -
-        abs(eye_spacing - 0.38) * 35
+        8 -
+        abs(eye_spacing - 0.38) * 50
     )
 
     spacing_score = clamp(spacing_score)
 
     width_score = (
-        10 -
-        abs(eye_width - 0.16) * 50
+        8 -
+        abs(eye_width - 0.18) * 60
     )
 
     width_score = clamp(width_score)
 
     height_score = (
-        10 -
-        abs(eye_height - 0.045) * 120
+        8 -
+        abs(eye_height - 0.055) * 140
     )
 
     height_score = clamp(height_score)
 
     tilt_score = (
-        10 -
-        abs(canthal_tilt - 3.0) * 0.8
+        8 -
+        abs(canthal_tilt - 4.0) * 0.8
     )
 
     tilt_score = clamp(tilt_score)
@@ -591,15 +591,15 @@ def calculate_scores(metrics):
     nose_length = metrics["nose_length_ratio"]
 
     nose_width_score = (
-        10 -
-        abs(nose_width - 0.28) * 35
+        8 -
+        abs(nose_width - 0.28) * 50
     )
 
     nose_width_score = clamp(nose_width_score)
 
     nose_length_score = (
-        10 -
-        abs(nose_length - 0.30) * 35
+        8 -
+        abs(nose_length - 0.30) * 50
     )
 
     nose_length_score = clamp(nose_length_score)
@@ -619,15 +619,15 @@ def calculate_scores(metrics):
     jaw_to_cheek = metrics["jaw_to_cheek_ratio"]
 
     jaw_width_score = (
-        10 -
-        abs(jaw_ratio - 0.82) * 20
+        8 -
+        abs(jaw_ratio - 0.82) * 35
     )
 
     jaw_width_score = clamp(jaw_width_score)
 
     jaw_structure_score = (
-        10 -
-        abs(jaw_to_cheek - 0.85) * 30
+        8 -
+        abs(jaw_to_cheek - 0.85) * 40
     )
 
     jaw_structure_score = clamp(jaw_structure_score)
