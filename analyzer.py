@@ -740,12 +740,25 @@ Face Shape: {metrics['face_shape']}
 Facial Thirds Ratio: {metrics['thirds_ratio']}
 
 Facial Symmetry: {metrics['symmetry']}
+
 Canthal Tilt: {metrics['canthal_tilt']}
 Eye Spacing Ratio: {metrics['eye_spacing_ratio']}
+Eye Width Ratio: {metrics['eye_width_ratio']}
+Eye Height Ratio: {metrics['eye_height_ratio']}
+Eye Aspect Ratio: {metrics['eye_aspect_ratio']}
 
 Nose Ratio: {metrics['nose_ratio']}
+Nose Length Ratio: {metrics['nose_length_ratio']}
+
 Mouth Ratio: {metrics['mouth_ratio']}
+
 Jaw Ratio: {metrics['jaw_ratio']}
+Jaw To Cheek Ratio: {metrics['jaw_to_cheek_ratio']}
+
+Chin Ratio: {metrics['chin_ratio']}
+
+Head Roll: {metrics['head_roll']}
+Head Yaw: {metrics['head_yaw']}
 
 Image Quality: {metrics['image_quality']}
 
@@ -754,13 +767,67 @@ SCORES
 =====================
 
 Overall Score: {scores['overall_score']}
+
 Symmetry Score: {scores['symmetry_score']}
 Proportion Score: {scores['proportion_score']}
+Thirds Score: {scores['thirds_score']}
+
 Eye Score: {scores['eye_score']}
+
 Nose Score: {scores['nose_score']}
+
 Jaw Score: {scores['jaw_score']}
+Chin Score: {scores['chin_score']}
+
+Confidence: {scores['confidence']}%
 
 Tier: {tier}
+
+=================================================
+FEATURE SELECTION RULES
+=================================================
+
+A feature can be listed as a POSITIVE only if its score is >= 7.5.
+
+A feature can be listed as a NEGATIVE only if its score is <= 6.5.
+
+Scores between 6.5 and 7.5 are NEUTRAL.
+
+Neutral features must NOT appear in positives.
+
+Neutral features must NOT appear in negatives.
+
+Never call a 6.8 or 6.9 feature a strength.
+
+Never call a 6.8 or 6.9 feature a weakness.
+
+Only clearly strong features belong in positives.
+Only clearly weak features belong in negatives.
+
+=================================================
+STRICT ANALYSIS RULES
+=================================================
+
+You do NOT see the image.
+
+You only see numerical metrics.
+
+Never claim:
+
+- beautiful eyes
+- attractive nose
+- strong jawline
+- ideal spacing
+
+unless the corresponding score is above 7.5.
+
+Never use words:
+
+"идеальный"
+"почти идеальный"
+"безупречный"
+
+unless score >= 9.0.
 
 =====================
 IMPORTANT RULES
@@ -926,6 +993,7 @@ def analyze_face(image_path):
 📏 <b>Пропорции лица:</b> {scores['proportion_score']}/10
 📐 <b>Вертикальные пропорции:</b> {scores['thirds_score']}/10
 🦴 <b>Выраженность челюсти:</b> {scores['jaw_score']}/10
+🔻 Подбородок: {scores['chin_score']}/10
 👃 <b>Нос:</b> {scores['nose_score']}/10
 👀 <b>Область глаз:</b> {scores['eye_score']}/10
 
