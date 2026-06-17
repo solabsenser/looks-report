@@ -57,6 +57,35 @@ class AnalyzerStates(StatesGroup):
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
+# ===== PREMIUM =====
+async def is_premium_user(user_id: int):
+    try:
+        response = (
+            supabase
+            .table("leaderboard")
+            .select("is_premium")
+            .eq("user_id", user_id)
+            .single()
+            .execute()
+        )
+
+        return response.data.get("is_premium", False)
+
+    except:
+        return False
+
+
+async def activate_premium(user_id: int):
+    (
+        supabase
+        .table("leaderboard")
+        .update({
+            "is_premium": True
+        })
+        .eq("user_id", user_id)
+        .execute()
+    )
+    
 # --- КЛАВИАТУРЫ ---
 
 def get_main_keyboard() -> ReplyKeyboardMarkup:
@@ -162,16 +191,43 @@ async def process_leaderboard(message: Message, state: FSMContext):
 @dp.message(F.text == "💎 Премиум")
 async def process_premium(message: Message, state: FSMContext):
     await state.clear()
-    
-    premium_text = (
-        "💎 Face Analyzer Premium\n\n"
-        "Откройте расширенные возможности ИИ аналитики:\n"
-        "• Отсутствие лимитов на загрузку фото.\n"
-        "• Подробный расчет Hunter Eyes и углов челюсти.\n"
-        "• Персональный ИИ-стилист по подбору причесок.\n\n"
-        "Функция Premium интеграции находится в разработке (скоро через Telegram Stars)."
+
+    premium = await is_premium_user(
+        message.from_user.id
     )
-    await message.answer(premium_text)
+
+    if premium:
+        await message.answer(
+            "⭐ Premium уже активирован!\n\n"
+            "Ваши возможности:\n\n"
+            "✅ Face Heatmap\n"
+            "✅ FaceMesh Visualization\n"
+            "✅ Debug Analysis Mode\n"
+            "✅ Все будущие Premium обновления\n\n"
+            "Статус: Активен 🟢"
+        )
+        return
+
+    await message.answer(
+        "💎 FACE ANALYZER PREMIUM\n\n"
+
+        "Что открывает Premium:\n\n"
+
+        "🗺 Face Heatmap\n"
+        "Визуализация сильных и слабых зон лица.\n\n"
+
+        "🧠 FaceMesh Analysis\n"
+        "Все точки анализа MediaPipe поверх фотографии.\n\n"
+
+        "📐 Debug Visualization\n"
+        "Показ измерений симметрии, пропорций и структуры лица.\n\n"
+
+        "📊 Extended Report\n"
+        "Расширенный отчет со всеми вычисленными метриками.\n\n"
+
+        "🚀 Early Access\n"
+        "Доступ к новым функциям раньше остальных пользователей."
+)
 
 # --- ОБРАБОТКА ФОТО (FSM СЦЕНАРИЙ) ---
 
