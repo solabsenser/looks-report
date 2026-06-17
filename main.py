@@ -19,6 +19,8 @@ from premium import (
     generate_premium_report
 )
 from aiogram.types import FSInputFile
+from aiogram.types import LabeledPrice
+from aiogram.types import PreCheckoutQuery
 
 # Настройка логирования
 logging.basicConfig(
@@ -193,7 +195,7 @@ async def process_leaderboard(message: Message, state: FSMContext):
         logger.error(f"Error querying leaderboard: {e}")
         await message.answer("❌ Ошибка загрузки таблицы.")
 
-
+# ======= PREMIUM BUY =========
 @dp.message(F.text == "💎 Премиум")
 async def process_premium(message: Message, state: FSMContext):
     await state.clear()
@@ -214,6 +216,17 @@ async def process_premium(message: Message, state: FSMContext):
         )
         return
 
+    buy_keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="💳 Купить Premium",
+                    callback_data="buy_premium"
+                )
+            ]
+        ]
+    )
+
     await message.answer(
         "💎 FACE ANALYZER PREMIUM\n\n"
 
@@ -232,8 +245,79 @@ async def process_premium(message: Message, state: FSMContext):
         "Расширенный отчет со всеми вычисленными метриками.\n\n"
 
         "🚀 Early Access\n"
-        "Доступ к новым функциям раньше остальных пользователей."
-)
+        "Доступ к новым функциям раньше остальных пользователей.\n\n"
+
+        "⭐ Стоимость: 500 Stars",
+        reply_markup=buy_keyboard
+    )
+
+@dp.callback_query(F.data == "buy_premium")
+async def buy_premium(callback: CallbackQuery):
+
+    premium = await is_premium_user(
+        callback.from_user.id
+    )
+
+    if premium:
+
+        await callback.answer(
+            "Premium уже активирован",
+            show_alert=True
+        )
+        return
+
+    await callback.message.answer_invoice(
+        title="Face Analyzer Premium",
+        description=(
+            "Premium доступ:\n"
+            "• Heatmap\n"
+            "• FaceMesh\n"
+            "• Debug Visualization\n"
+            "• Extended Report"
+        ),
+        payload="premium_forever",
+        currency="XTR",
+        prices=[
+            LabeledPrice(
+                label="Premium Forever",
+                amount=10
+            )
+        ]
+    )
+
+    await callback.answer()
+
+@dp.pre_checkout_query()
+async def process_pre_checkout(
+    pre_checkout_query: PreCheckoutQuery
+):
+    await bot.answer_pre_checkout_query(
+        pre_checkout_query.id,
+        ok=True
+    )
+
+@dp.message(F.successful_payment)
+async def successful_payment(
+    message: Message
+):
+
+    if (
+        message.successful_payment.invoice_payload
+        == "premium_forever"
+    ):
+
+        await activate_premium(
+            message.from_user.id
+        )
+
+        await message.answer(
+            "🎉 Premium успешно активирован!\n\n"
+            "Теперь вам доступны:\n\n"
+            "✅ Face Heatmap\n"
+            "✅ FaceMesh Visualization\n"
+            "✅ Debug Analysis\n"
+            "✅ Extended Report"
+        )
 
 # --- ОБРАБОТКА ФОТО (FSM СЦЕНАРИЙ) ---
 
