@@ -315,12 +315,21 @@ async def successful_payment(
             message.from_user.id
         )
 
-        try:
-            await message.delete()
-        except:
-            pass
+        chat_id = message.chat.id
+        message_id = message.message_id
 
-        await message.answer(
+        try:
+            await bot.delete_message(
+                chat_id=chat_id,
+                message_id=message_id
+            )
+        except Exception as e:
+            logger.error(
+                f"Failed to delete invoice: {e}"
+            )
+
+        await bot.send_message(
+            chat_id,
             "🎉 Premium успешно приобретён!\n\n"
             "Спасибо за поддержку Face Analyzer ❤️\n\n"
             "Ваш Premium активирован навсегда.\n\n"
