@@ -329,12 +329,6 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
             message_id=waiting_msg.message_id
         )
 
-        # Отправляем отчет
-        await message.reply(
-            report,
-            parse_mode="HTML"
-        )
-
         # ===== PREMIUM =====
 
         premium = await is_premium_user(
@@ -396,6 +390,12 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
                 logger.error(
                     f"Premium error: {premium_error}"
                 )
+                
+        # Отправляем отчет
+        await message.reply(
+            report,
+            parse_mode="HTML"
+        )
         
         # Если юзер достиг какого-то достижения в таблице лидеров — пушим уведомление
         if milestone_text:
