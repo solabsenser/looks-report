@@ -285,7 +285,7 @@ async def buy_premium(callback: CallbackQuery):
         prices=[
             LabeledPrice(
                 label="Premium Forever",
-                amount=1
+                amount=10
             )
         ]
     )
@@ -351,13 +351,16 @@ async def successful_payment(
         message.chat.id,
         "🎉 Premium успешно приобретён!\n\n"
         "Спасибо за поддержку Face Analyzer ❤️\n\n"
-        "Ваш Premium активирован навсегда.\n\n"
-        "Доступно:\n"
+        "💎 Ваш Premium активирован навсегда.\n\n"
+        "Теперь вам доступны:\n\n"
         "✅ Face Heatmap\n"
         "✅ FaceMesh Visualization\n"
-        "✅ Debug Analysis\n"
-        "✅ Extended Report\n\n"
-        "Приятного использования! 🚀"
+        "✅ Debug Analysis Mode\n"
+        "✅ Extended Report\n"
+        "✅ Все будущие Premium обновления\n\n"
+        "⚠️ Premium уже привязан к вашему аккаунту.\n"
+        "Повторная покупка не требуется.\n\n"
+        "Приятного использования и удачного анализа! 🚀"
     )
 
 # --- ОБРАБОТКА ФОТО (FSM СЦЕНАРИЙ) ---
