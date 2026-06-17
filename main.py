@@ -266,6 +266,11 @@ async def buy_premium(callback: CallbackQuery):
         )
         return
 
+    try:
+        await callback.message.delete()
+    except:
+        pass
+
     await callback.message.answer_invoice(
         title="Face Analyzer Premium",
         description=(
@@ -280,7 +285,7 @@ async def buy_premium(callback: CallbackQuery):
         prices=[
             LabeledPrice(
                 label="Premium Forever",
-                amount=0
+                amount=1
             )
         ]
     )
@@ -310,13 +315,21 @@ async def successful_payment(
             message.from_user.id
         )
 
+        try:
+            await message.delete()
+        except:
+            pass
+
         await message.answer(
-            "🎉 Premium успешно активирован!\n\n"
-            "Теперь вам доступны:\n\n"
+            "🎉 Premium успешно приобретён!\n\n"
+            "Спасибо за поддержку Face Analyzer ❤️\n\n"
+            "Ваш Premium активирован навсегда.\n\n"
+            "Доступно:\n"
             "✅ Face Heatmap\n"
             "✅ FaceMesh Visualization\n"
             "✅ Debug Analysis\n"
-            "✅ Extended Report"
+            "✅ Extended Report\n\n"
+            "Приятного использования! 🚀"
         )
 
 # --- ОБРАБОТКА ФОТО (FSM СЦЕНАРИЙ) ---
