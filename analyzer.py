@@ -534,6 +534,7 @@ def calculate_face_metrics(image_path):
         "nose_deviation": round(nose_deviation, 3),
         "chin_deviation": round(chin_deviation, 3),
         "facial_fifths_ratio": round(facial_fifths_ratio, 3),
+        "landmarks": landmarks
     }
 
 def clamp(value, min_value=0.0, max_value=10.0):
@@ -1120,7 +1121,10 @@ def analyze_face(image_path):
 
         return {
             "score": scores["overall_score"],
-            "report": report
+            "report": report,
+            "metrics": metrics,
+            "scores": scores,
+            "landmarks": metrics["landmarks"]
         }
 
     except Exception as e:
