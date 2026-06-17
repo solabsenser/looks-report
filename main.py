@@ -308,38 +308,57 @@ async def successful_payment(
 
     if (
         message.successful_payment.invoice_payload
-        == "premium_forever"
+        != "premium_forever"
     ):
+        return
 
-        await activate_premium(
-            message.from_user.id
-        )
+    # Защита от повторной покупки
+    already_premium = await is_premium_user(
+        message.from_user.id
+    )
 
-        chat_id = message.chat.id
-        message_id = message.message_id
+    if already_premium:
 
         try:
             await bot.delete_message(
-                chat_id=chat_id,
-                message_id=message_id
+                chat_id=message.chat.id,
+                message_id=message.message_id
             )
-        except Exception as e:
-            logger.error(
-                f"Failed to delete invoice: {e}"
-            )
+        except:
+            pass
 
         await bot.send_message(
-            chat_id,
-            "🎉 Premium успешно приобретён!\n\n"
-            "Спасибо за поддержку Face Analyzer ❤️\n\n"
-            "Ваш Premium активирован навсегда.\n\n"
-            "Доступно:\n"
-            "✅ Face Heatmap\n"
-            "✅ FaceMesh Visualization\n"
-            "✅ Debug Analysis\n"
-            "✅ Extended Report\n\n"
-            "Приятного использования! 🚀"
+            message.chat.id,
+            "⚠️ Premium уже активирован на вашем аккаунте."
         )
+        return
+
+    await activate_premium(
+        message.from_user.id
+    )
+
+    try:
+        await bot.delete_message(
+            chat_id=message.chat.id,
+            message_id=message.message_id
+        )
+    except Exception as e:
+        logger.error(
+            f"Failed to delete invoice: {e}"
+        )
+
+    await bot.send_message(
+        message.chat.id,
+        "🎉 Premium успешно приобретён!\n\n"
+        "Спасибо за поддержку Face Analyzer ❤️\n\n"
+        "Ваш Premium активирован навсегда.\n\n"
+        "Доступно:\n"
+        "✅ Face Heatmap\n"
+        "✅ FaceMesh Visualization\n"
+        "✅ Debug Analysis\n"
+        "✅ Extended Report\n\n"
+        "Приятного использования! 🚀"
+    )
 
 # --- ОБРАБОТКА ФОТО (FSM СЦЕНАРИЙ) ---
 
