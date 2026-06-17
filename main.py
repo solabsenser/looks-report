@@ -15,7 +15,8 @@ from analyzer import ANALYZER_BACKEND, analyze_face
 from premium import (
     generate_mesh_overlay,
     generate_heatmap,
-    generate_debug_overlay
+    generate_debug_overlay,
+    generate_premium_report
 )
 from aiogram.types import FSInputFile
 
@@ -327,7 +328,7 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
             chat_id=message.chat.id,
             message_id=waiting_msg.message_id
         )
-        
+
         # Отправляем отчет
         await message.reply(
             report,
@@ -363,28 +364,25 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
                     landmarks
                 )
 
-                if mesh_file:
-                    await message.answer_photo(
-                        FSInputFile(mesh_file),
-                        caption="🧠 FaceMesh Visualization"
-                    )
+                premium_file = generate_premium_report(
+                    temp_image_path,
+                    mesh_file,
+                    heatmap_file,
+                    debug_file
+                )
 
-                if heatmap_file:
-                    await message.answer_photo(
-                        FSInputFile(heatmap_file),
-                        caption="🔥 Face Heatmap"
-                    )
+                if premium_file:
 
-                if debug_file:
                     await message.answer_photo(
-                        FSInputFile(debug_file),
-                        caption="📐 Debug Analysis"
+                        FSInputFile(premium_file),
+                        caption="💎 Premium Face Analysis"
                     )
 
                 for file_path in [
                     mesh_file,
                     heatmap_file,
-                    debug_file
+                    debug_file,
+                    premium_file
                 ]:
 
                     if (
