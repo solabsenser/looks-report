@@ -247,7 +247,7 @@ async def process_premium(message: Message, state: FSMContext):
         "🚀 Early Access\n"
         "Доступ к новым функциям раньше остальных пользователей.\n\n"
 
-        "⭐ Стоимость: 500 Stars",
+        "⭐ Стоимость: 10 Stars",
         reply_markup=buy_keyboard
     )
 
@@ -280,7 +280,7 @@ async def buy_premium(callback: CallbackQuery):
         prices=[
             LabeledPrice(
                 label="Premium Forever",
-                amount=10
+                amount=0
             )
         ]
     )
