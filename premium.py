@@ -209,3 +209,99 @@ def generate_debug_overlay(
     cv2.imwrite(output, image)
 
     return output
+
+def generate_premium_report(
+    original_path,
+    mesh_path,
+    heatmap_path,
+    debug_path
+):
+
+    import cv2
+    import numpy as np
+
+    original = cv2.imread(original_path)
+    mesh = cv2.imread(mesh_path)
+    heatmap = cv2.imread(heatmap_path)
+    debug = cv2.imread(debug_path)
+
+    if (
+        original is None
+        or mesh is None
+        or heatmap is None
+        or debug is None
+    ):
+        return None
+
+    h, w = original.shape[:2]
+
+    mesh = cv2.resize(mesh, (w, h))
+    heatmap = cv2.resize(heatmap, (w, h))
+    debug = cv2.resize(debug, (w, h))
+
+    cv2.putText(
+        mesh,
+        "FaceMesh",
+        (20, 40),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1,
+        (255, 255, 255),
+        2
+    )
+
+    cv2.putText(
+        heatmap,
+        "Heatmap",
+        (20, 40),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1,
+        (255, 255, 255),
+        2
+    )
+
+    cv2.putText(
+        debug,
+        "Debug",
+        (20, 40),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1,
+        (255, 255, 255),
+        2
+    )
+
+    cv2.putText(
+        original,
+        "Original",
+        (20, 40),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1,
+        (255, 255, 255),
+        2
+    )
+
+    top = np.hstack([
+        mesh,
+        heatmap
+    ])
+
+    bottom = np.hstack([
+        debug,
+        original
+    ])
+
+    final = np.vstack([
+        top,
+        bottom
+    ])
+
+    output = original_path.replace(
+        ".jpg",
+        "_premium.jpg"
+    )
+
+    cv2.imwrite(
+        output,
+        final
+    )
+
+    return output
