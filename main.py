@@ -11,8 +11,13 @@ from aiohttp import web
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
-# Импорт оригинальной функции из твоего analyzer.py
 from analyzer import ANALYZER_BACKEND, analyze_face
+from premium import (
+    generate_mesh_overlay,
+    generate_heatmap,
+    generate_debug_overlay
+)
+from aiogram.types import FSInputFile
 
 # Настройка логирования
 logging.basicConfig(
@@ -317,9 +322,82 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
                 logger.error(f"DB Error: {db_err}")
                 milestone_text = "❌ Ошибка записи в базу."
                 
-        # Удаляем сообщение с анимацией загрузки и присылаем готовый HTML-отчет
-        await bot.delete_message(chat_id=message.chat.id, message_id=waiting_msg.message_id)
-        await message.reply(report, parse_mode="HTML")
+        # Удаляем сообщение загрузки
+        await bot.delete_message(
+            chat_id=message.chat.id,
+            message_id=waiting_msg.message_id
+        )
+        
+        # Отправляем отчет
+        await message.reply(
+            report,
+            parse_mode="HTML"
+        )
+
+        # ===== PREMIUM =====
+
+        premium = await is_premium_user(
+            user_id
+        )
+
+        if premium:
+
+            try:
+
+                landmarks = result["landmarks"]
+                scores = result["scores"]
+
+                mesh_file = generate_mesh_overlay(
+                    temp_image_path,
+                    landmarks
+                )
+
+                heatmap_file = generate_heatmap(
+                    temp_image_path,
+                    landmarks,
+                    scores
+                )
+
+                debug_file = generate_debug_overlay(
+                    temp_image_path,
+                    landmarks
+                )
+
+                if mesh_file:
+                    await message.answer_photo(
+                        FSInputFile(mesh_file),
+                        caption="🧠 FaceMesh Visualization"
+                    )
+
+                if heatmap_file:
+                    await message.answer_photo(
+                        FSInputFile(heatmap_file),
+                        caption="🔥 Face Heatmap"
+                    )
+
+                if debug_file:
+                    await message.answer_photo(
+                        FSInputFile(debug_file),
+                        caption="📐 Debug Analysis"
+                    )
+
+                for file_path in [
+                    mesh_file,
+                    heatmap_file,
+                    debug_file
+                ]:
+
+                    if (
+                        file_path
+                        and os.path.exists(file_path)
+                    ):
+                        os.remove(file_path)
+
+            except Exception as premium_error:
+
+                logger.error(
+                    f"Premium error: {premium_error}"
+                )
         
         # Если юзер достиг какого-то достижения в таблице лидеров — пушим уведомление
         if milestone_text:
