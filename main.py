@@ -65,6 +65,16 @@ class AnalyzerStates(StatesGroup):
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
+# ===== ADMIN ========
+ADMIN_IDS = [
+    int(admin_id)
+    for admin_id in os.getenv(
+        "ADMIN_IDS",
+        ""
+    ).split(",")
+    if admin_id.strip()
+]
+
 # ===== PREMIUM =====
 async def is_premium_user(user_id: int):
     try:
@@ -598,6 +608,53 @@ async def start_health_server() -> web.AppRunner | None:
 
 async def main():
     logger.info("Initializing polling engine with analyzer backend: %s", ANALYZER_BACKEND)
+
+@dp.message(Command("givepremium"))
+async def give_premium_admin(
+    message: Message
+):
+
+    if message.from_user.id not in ADMIN_IDS:
+        return
+
+    args = message.text.split()
+
+    if len(args) != 2:
+
+        await message.answer(
+            "Использование:\n"
+            "/givepremium USER_ID"
+        )
+        return
+
+    try:
+
+        target_user = int(args[1])
+
+        await activate_premium(
+            target_user
+        )
+
+        await message.answer(
+            f"✅ Premium выдан пользователю {target_user}"
+        )
+
+        try:
+
+            await bot.send_message(
+                target_user,
+                "🎉 Администратор активировал вам Premium!\n\n"
+                "💎 Premium активирован навсегда."
+            )
+
+        except:
+            pass
+
+    except Exception as e:
+
+        await message.answer(
+            f"❌ Ошибка: {e}"
+        )
     
     # --- НАСТРОЙКА КНОПКИ МЕНЮ ДЛЯ ПОЛЬЗОВАТЕЛЕЙ ---
     commands = [
