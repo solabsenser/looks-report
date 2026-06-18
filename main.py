@@ -115,7 +115,7 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
     builder.button(text="💎 Премиум")
     
     # Сетка: 2 кнопки в ряд, 1 снизу по центру
-    builder.adjust(2, 1)
+    builder.adjust(2, 2)
     
     return builder.as_markup(
         resize_keyboard=True,
@@ -155,6 +155,22 @@ async def process_rate_photo(message: Message, state: FSMContext):
     )
     await message.answer(instruction_text)
 
+@dp.message(F.text == "ℹ️ О сервисе")
+async def process_info(message: Message):
+
+    await message.answer(
+        "ℹ️ О MorphIQ\n\n"
+
+        "🧠 Morphiq анализирует пропорции, симметрию и структуру лица "
+        "с помощью компьютерного зрения и ИИ.\n\n"
+
+        "🏆 Лучшие результаты попадают в таблицу моггеров.\n\n"
+
+        "📊 Анализ основан на объективных метриках лица, а не на субъективном мнении.\n\n"
+
+        "⚠️ Результаты являются приблизительными и могут отличаться "
+        "в зависимости от качества фото, освещения и ракурса."
+    )
 
 @dp.message(F.text == "🏆 Таблица моггеров")
 async def process_leaderboard(message: Message, state: FSMContext):
