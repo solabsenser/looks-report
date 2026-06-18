@@ -1101,7 +1101,7 @@ def analyze_face(image_path):
         ai_feedback = response.choices[0].message.content.strip()
 
         report = f"""
-📊 <b>FACE ANALYSIS REPORT</b>
+📊 <b>MORPHIQ ANALYSIS REPORT</b>
 
 ⭐ <b>Overall Rating (Appeal):</b> {scores['overall_score']}/10
 📊 <b>Достоверность анализа:</b> {scores['confidence']}%
