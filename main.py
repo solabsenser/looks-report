@@ -130,9 +130,10 @@ async def cmd_start(message: Message, state: FSMContext):
     logger.info(f"User {message.from_user.id} started the bot.")
     
     welcome_text = (
-        "🤖 Добро пожаловать в Face Analyzer AI!\n\n"
-        "Я помогу провести глубокий компьютерный анализ пропорций и симметрии твоего лица при помощи MediaPipe и ИИ.\n\n"
-        "Выберите интересующий пункт меню на клавиатуре ниже"
+        "🤖 MorphIQ\n\n"
+        "Система компьютерного анализа лица на базе MediaPipe и искусственного интеллекта.\n\n"
+        "Оценка симметрии, пропорций, структуры и других объективных метрик.\n\n"
+        "Выберите нужный раздел ниже 👇"
     )
     # Отправляем меню с нашей новой Reply-клавиатурой (без parse_mode, чистый текст)
     await message.answer(welcome_text, reply_markup=get_main_keyboard())
@@ -360,7 +361,7 @@ async def successful_payment(
     await bot.send_message(
         message.chat.id,
         "🎉 Premium успешно приобретён!\n\n"
-        "Спасибо за поддержку Face Analyzer ❤️\n\n"
+        "Спасибо за поддержку MorphIQ ❤️\n\n"
         "💎 Ваш Premium активирован навсегда.\n\n"
         "Теперь вам доступны:\n\n"
         "✅ Face Heatmap\n"
