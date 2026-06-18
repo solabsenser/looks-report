@@ -113,6 +113,7 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
     builder.button(text="📊 Анализ лица")
     builder.button(text="🏆 Таблица моггеров")
     builder.button(text="💎 Премиум")
+    builder.button(text="ℹ️ О сервисе")
     
     # Сетка: 2 кнопки в ряд, 1 снизу по центру
     builder.adjust(2, 2)
