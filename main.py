@@ -420,6 +420,58 @@ async def give_premium_admin(
         await message.answer(
             f"❌ Ошибка: {e}"
         )
+
+@dp.message(Command("removepremium"))
+async def remove_premium_admin(
+    message: Message
+):
+
+    if message.from_user.id not in ADMIN_IDS:
+        return
+
+    args = message.text.split()
+
+    if len(args) != 2:
+
+        await message.answer(
+            "Использование:\n"
+            "/removepremium USER_ID"
+        )
+        return
+
+    try:
+
+        target_user = int(args[1])
+
+        (
+            supabase
+            .table("leaderboard")
+            .update({
+                "is_premium": False
+            })
+            .eq("user_id", target_user)
+            .execute()
+        )
+
+        await message.answer(
+            f"✅ Premium отозван у пользователя {target_user}"
+        )
+
+        try:
+
+            await bot.send_message(
+                target_user,
+                "⚠️ Ваш Premium был деактивирован администратором."
+            )
+
+        except:
+            pass
+
+    except Exception as e:
+
+        await message.answer(
+            f"❌ Ошибка: {e}"
+        )
         
 # --- ОБРАБОТКА ФОТО (FSM СЦЕНАРИЙ) ---
 
