@@ -244,7 +244,7 @@ async def process_leaderboard(message: Message, state: FSMContext):
             await message.answer("🏆 <b>Таблица моггеров пока пуста!</b>", parse_mode="HTML")
             return
             
-        leaderboard_text = "🏆 <b>ТОП-10 МОГГЕРОВ (ОТФИЛЬТРОВАНО)</b>\n\n"
+        leaderboard_text = "🏆 <b>ТОП-10 МОГГЕРОВ</b>\n\n"
         medals = ["👑", "⚡", "🧊", "👾", "☄️", "🔥", "💎", "🛡️", "🔮", "🧿"]
         
         for idx, row in enumerate(response.data, 1):
@@ -265,7 +265,7 @@ async def process_leaderboard(message: Message, state: FSMContext):
             
             leaderboard_text += f"{idx}. {icon} {username} — <b>{display_score}/10</b>{streak_text}\n"
             
-        leaderboard_text += "\n<i>*Оценки свыше 8.5 являются экстремально редкими и проходят строгую модерацию алгоритма.</i>"
+        leaderboard_text += "\n<i>*Абсолютно все оценки проходят строгую модерацию алгоритма.</i>"
         await message.answer(leaderboard_text, parse_mode="HTML")
         
     except Exception as e:
