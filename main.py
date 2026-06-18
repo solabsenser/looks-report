@@ -103,7 +103,44 @@ async def activate_premium(user_id: int):
         .eq("user_id", user_id)
         .execute()
     )
-    
+
+async def ensure_user_exists(
+    user_id: int,
+    username: str | None = None
+):
+
+    try:
+
+        existing = (
+            supabase
+            .table("leaderboard")
+            .select("user_id")
+            .eq("user_id", user_id)
+            .execute()
+        )
+
+        if existing.data:
+            return
+
+        (
+            supabase
+            .table("leaderboard")
+            .insert({
+                "user_id": user_id,
+                "username": username,
+                "max_score": 0,
+                "streak": 1,
+                "is_premium": False
+            })
+            .execute()
+        )
+
+    except Exception as e:
+
+        logger.error(
+            f"Failed to create user: {e}"
+        )
+        
 # --- КЛАВИАТУРЫ ---
 
 def get_main_keyboard() -> ReplyKeyboardMarkup:
@@ -124,20 +161,31 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
     )
 
 # --- ХЭНДЛЕРЫ ---
-
 @dp.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
+
     await state.clear()
-    logger.info(f"User {message.from_user.id} started the bot.")
-    
+
+    await ensure_user_exists(
+        message.from_user.id,
+        message.from_user.username
+    )
+
+    logger.info(
+        f"User {message.from_user.id} started the bot."
+    )
+
     welcome_text = (
         "🤖 MorphIQ\n\n"
         "Система компьютерного анализа лица на базе MediaPipe и искусственного интеллекта.\n\n"
         "Оценка симметрии, пропорций, структуры и других объективных метрик.\n\n"
         "Выберите нужный раздел ниже 👇"
     )
-    # Отправляем меню с нашей новой Reply-клавиатурой (без parse_mode, чистый текст)
-    await message.answer(welcome_text, reply_markup=get_main_keyboard())
+
+    await message.answer(
+        welcome_text,
+        reply_markup=get_main_keyboard()
+    )
 
 
 @dp.message(F.text == "📊 Анализ лица")
