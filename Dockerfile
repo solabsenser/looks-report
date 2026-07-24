@@ -1,7 +1,9 @@
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    FACE_LANDMARKER_MODEL_PATH=/tmp/morphiq_models/face_landmarker.task
 
 WORKDIR /app
 
