@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.env
+.env.*
+models/
+*.jpg
+*.jpeg
+*.png
+scan_*
+*_mesh.jpg
+*_heatmap.jpg
+*_debug.jpg
+*_premium.jpg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

@@ -1,6 +1,8 @@
 import os
 import logging
 import asyncio
+import tempfile
+from pathlib import Path
 from datetime import datetime
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand, BotCommandScopeDefault
@@ -49,7 +51,7 @@ if SUPABASE_URL and SUPABASE_KEY:
         # Убираем случайные пробелы и кавычки, если они пролезли из env
         clean_url = SUPABASE_URL.strip().replace('"', '').replace("'", "")
         clean_key = SUPABASE_KEY.strip().replace('"', '').replace("'", "")
-        
+
         supabase = create_client(clean_url, clean_key)
         logger.info("Supabase client initialized successfully.")
     except Exception as e:
@@ -140,21 +142,21 @@ async def ensure_user_exists(
         logger.error(
             f"Failed to create user: {e}"
         )
-        
+
 # --- КЛАВИАТУРЫ ---
 
 def get_main_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
-    
+
     # Создаем 3 главные текстовые кнопки (убрали Историю)
     builder.button(text="📊 Анализ лица")
     builder.button(text="🏆 Таблица моггеров")
     builder.button(text="💎 Премиум")
     builder.button(text="ℹ️ О сервисе")
-    
+
     # Сетка: 2 кнопки в ряд, 1 снизу по центру
     builder.adjust(2, 2)
-    
+
     return builder.as_markup(
         resize_keyboard=True,
         input_field_placeholder="Выберите нужный раздел..."
@@ -192,7 +194,7 @@ async def cmd_start(message: Message, state: FSMContext):
 async def process_rate_photo(message: Message, state: FSMContext):
     await state.clear()
     await state.set_state(AnalyzerStates.waiting_for_photo)
-    
+
     instruction_text = (
         "📸 Отправьте фотографию лица\n\n"
         "⚠️ Требования к снимку для точной работы ИИ:\n"
@@ -225,7 +227,7 @@ async def process_info(message: Message):
 @dp.message(F.text == "🏆 Таблица моггеров")
 async def process_leaderboard(message: Message, state: FSMContext):
     await state.clear()
-    
+
     if not supabase:
         await message.answer("⚠️ Таблица моггеров временно недоступна.")
         return
@@ -239,35 +241,35 @@ async def process_leaderboard(message: Message, state: FSMContext):
             .limit(10)
             .execute()
         )
-        
+
         if not response.data:
             await message.answer("🏆 <b>Таблица моггеров пока пуста!</b>", parse_mode="HTML")
             return
-            
+
         leaderboard_text = "🏆 <b>ТОП-10 МОГГЕРОВ</b>\n\n"
         medals = ["👑", "⚡", "🧊", "👾", "☄️", "🔥", "💎", "🛡️", "🔮", "🧿"]
-        
+
         for idx, row in enumerate(response.data, 1):
             username = row.get('username') or "Аноним"
             # Очистка имени
             if username != "Аноним" and not username.startswith("@") and not username.startswith("id"):
                 username = f"@{username}"
-                
+
             raw_score = row.get('max_score', 0.0)
-            
+
             # АНТИ-ИНФЛЯЦИОННЫЙ ФИЛЬТР ДЛЯ ОТОБРАЖЕНИЯ:
             # Если в базе лежат старые "мусорные" 9.5+, мы их принудительно обрезаем для красоты
-            display_score = round(min(raw_score, 8.5), 1) 
-            
+            display_score = round(min(raw_score, 8.5), 1)
+
             streak = row.get('streak', 1)
             icon = medals[idx-1] if idx <= len(medals) else "🔹"
             streak_text = f" | 🔥 x{streak}" if streak > 1 else ""
-            
+
             leaderboard_text += f"{idx}. {icon} {username} — <b>{display_score}/10</b>{streak_text}\n"
-            
+
         leaderboard_text += "\n<i>*Абсолютно все оценки проходят строгую модерацию алгоритма.</i>"
         await message.answer(leaderboard_text, parse_mode="HTML")
-        
+
     except Exception as e:
         logger.error(f"Error querying leaderboard: {e}")
         await message.answer("❌ Ошибка загрузки таблицы.")
@@ -539,14 +541,14 @@ async def remove_premium_admin(
         await message.answer(
             f"❌ Ошибка: {e}"
         )
-        
+
 # --- ОБРАБОТКА ФОТО (FSM СЦЕНАРИЙ) ---
 
 @dp.message(AnalyzerStates.waiting_for_photo, F.photo)
 async def handle_photo_analysis(message: Message, state: FSMContext):
     user_id = message.from_user.id
     username = message.from_user.username or "unknown"
-    
+
     waiting_msg = await message.answer(
     "🔄 <b>Инициализация процесса...</b>\n"
     "1. Проверяем наличие лица.\n"
@@ -555,174 +557,171 @@ async def handle_photo_analysis(message: Message, state: FSMContext):
     "<i>Пожалуйста, подождите.</i>",
     parse_mode="HTML"
     )
-    
+
     photo = message.photo[-1]
-    temp_image_path = f"scan_{user_id}_{photo.file_id[:10]}.jpg"
-    
-    try:
-        logger.info(f"Downloading image from user {user_id}...")
-        await bot.download(photo, destination=temp_image_path)
-        
-        logger.info(f"Executing analytical core for file {temp_image_path}...")
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, analyze_face, temp_image_path)
-        
-        if not result or not isinstance(result, dict):
-            raise ValueError("Invalid data format returned from backend core.")
 
-        score = result.get("score", 0.0)
-        report = result.get("report", "⚠️ Отчет пуст.")
+    with tempfile.TemporaryDirectory(prefix=f"morphiq_{user_id}_") as temp_dir:
+        temp_image_path = str(Path(temp_dir) / "source.jpg")
 
-# ЛОГИКА ТАБЛИЦЫ ЛИДЕРОВ И СТРИКОВ
-        milestone_text = ""
-        if supabase:
-            try:
-                current_photo_id = photo.file_id
-                # Ищем запись по ID пользователя
-                user_check = supabase.table("leaderboard").select("*").eq("user_id", user_id).execute()
-                
-                if user_check.data:
-                    record = user_check.data[0]
-                    old_max = float(record.get("max_score", 0.0))
-                    old_streak = int(record.get("streak", 1))
-                    last_photo_id = record.get("last_photo_id", "")
-                    
-                    if last_photo_id == current_photo_id:
-                        milestone_text = "⚠️ <b>Стрик не засчитан!</b> Вы отправили то же самое фото."
-                    
-                    elif score > old_max:
-                        # Новый рекорд — обновляем
-                        supabase.table("leaderboard").update({
-                            "max_score": score,
-                            "last_photo_id": current_photo_id,
-                            "updated_at": datetime.now().isoformat()
-                        }).eq("user_id", user_id).execute()
-                        milestone_text = f"👑 <b>Новый рекорд!</b> Ваша оценка: <b>{score}/10</b>."
-                    
-                    elif abs(score - old_max) <= 0.5:
-                        # Подтверждение уровня — обновляем стрик
-                        new_streak = old_streak + 1
-                        supabase.table("leaderboard").update({
-                            "streak": new_streak,
-                            "last_photo_id": current_photo_id,
-                            "updated_at": datetime.now().isoformat()
-                        }).eq("user_id", user_id).execute()
-                        milestone_text = f"🔥 <b>Стрик х{new_streak}!</b> Ваш уровень стабилен ({score}/10)."
-                    
+        try:
+            logger.info(f"Downloading image from user {user_id}...")
+            await bot.download(photo, destination=temp_image_path)
+
+            logger.info(f"Executing analytical core for file {temp_image_path}...")
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(None, analyze_face, temp_image_path)
+
+            if not result or not isinstance(result, dict):
+                raise ValueError("Invalid data format returned from backend core.")
+
+            score = result.get("score", 0.0)
+            report = result.get("report", "⚠️ Отчет пуст.")
+
+    # ЛОГИКА ТАБЛИЦЫ ЛИДЕРОВ И СТРИКОВ
+            milestone_text = ""
+            if supabase:
+                try:
+                    current_photo_id = photo.file_id
+                    # Ищем запись по ID пользователя
+                    user_check = supabase.table("leaderboard").select("*").eq("user_id", user_id).execute()
+
+                    if user_check.data:
+                        record = user_check.data[0]
+                        old_max = float(record.get("max_score", 0.0))
+                        old_streak = int(record.get("streak", 1))
+                        last_photo_id = record.get("last_photo_id", "")
+
+                        if last_photo_id == current_photo_id:
+                            milestone_text = "⚠️ <b>Стрик не засчитан!</b> Вы отправили то же самое фото."
+
+                        elif score > old_max:
+                            # Новый рекорд — обновляем
+                            supabase.table("leaderboard").update({
+                                "max_score": score,
+                                "last_photo_id": current_photo_id,
+                                "updated_at": datetime.now().isoformat()
+                            }).eq("user_id", user_id).execute()
+                            milestone_text = f"👑 <b>Новый рекорд!</b> Ваша оценка: <b>{score}/10</b>."
+
+                        elif abs(score - old_max) <= 0.5:
+                            # Подтверждение уровня — обновляем стрик
+                            new_streak = old_streak + 1
+                            supabase.table("leaderboard").update({
+                                "streak": new_streak,
+                                "last_photo_id": current_photo_id,
+                                "updated_at": datetime.now().isoformat()
+                            }).eq("user_id", user_id).execute()
+                            milestone_text = f"🔥 <b>Стрик х{new_streak}!</b> Ваш уровень стабилен ({score}/10)."
+
+                        else:
+                            milestone_text = f"✅ Анализ: <b>{score}/10</b>. (Ваш рекорд: {old_max}/10)."
+
                     else:
-                        milestone_text = f"✅ Анализ: <b>{score}/10</b>. (Ваш рекорд: {old_max}/10)."
-                
-                else:
-                    # Новая запись — создаем
-                    supabase.table("leaderboard").insert({
-                        "user_id": user_id,
-                        "username": username,
-                        "max_score": score,
-                        "streak": 1,
-                        "last_photo_id": current_photo_id,
-                        "updated_at": datetime.now().isoformat()
-                    }).execute()
-                    milestone_text = f"🏆 <b>Добро пожаловать в таблицу!</b> Результат <b>{score}/10</b> зафиксирован."
-                            
-            except Exception as db_err:
-                logger.error(f"DB Error: {db_err}")
-                milestone_text = "❌ Ошибка записи в базу."
-                
-        # Удаляем сообщение загрузки
-        await bot.delete_message(
-            chat_id=message.chat.id,
-            message_id=waiting_msg.message_id
-        )
+                        # Новая запись — создаем
+                        supabase.table("leaderboard").insert({
+                            "user_id": user_id,
+                            "username": username,
+                            "max_score": score,
+                            "streak": 1,
+                            "last_photo_id": current_photo_id,
+                            "updated_at": datetime.now().isoformat()
+                        }).execute()
+                        milestone_text = f"🏆 <b>Добро пожаловать в таблицу!</b> Результат <b>{score}/10</b> зафиксирован."
 
-        # ===== PREMIUM =====
+                except Exception as db_err:
+                    logger.error(f"DB Error: {db_err}")
+                    milestone_text = "❌ Ошибка записи в базу."
 
-        premium = await is_premium_user(
-            user_id
-        )
+            # Удаляем сообщение загрузки
+            await bot.delete_message(
+                chat_id=message.chat.id,
+                message_id=waiting_msg.message_id
+            )
 
-        if premium:
+            # ===== PREMIUM =====
 
-            try:
+            premium = await is_premium_user(
+                user_id
+            )
 
-                landmarks = result["landmarks"]
-                scores = result["scores"]
+            if premium:
 
-                mesh_file = generate_mesh_overlay(
-                    temp_image_path,
-                    landmarks
-                )
+                try:
 
-                heatmap_file = generate_heatmap(
-                    temp_image_path,
-                    landmarks,
-                    scores
-                )
+                    landmarks = result["landmarks"]
+                    scores = result["scores"]
 
-                debug_file = generate_debug_overlay(
-                    temp_image_path,
-                    landmarks
-                )
-
-                premium_file = generate_premium_report(
-                    temp_image_path,
-                    mesh_file,
-                    heatmap_file,
-                    debug_file
-                )
-
-                if premium_file:
-
-                    await message.answer_photo(
-                        FSInputFile(premium_file),
-                        caption="💎 Premium Face Analysis"
+                    mesh_file = generate_mesh_overlay(
+                        temp_image_path,
+                        landmarks
                     )
 
-                for file_path in [
-                    mesh_file,
-                    heatmap_file,
-                    debug_file,
-                    premium_file
-                ]:
+                    heatmap_file = generate_heatmap(
+                        temp_image_path,
+                        landmarks,
+                        scores
+                    )
 
-                    if (
-                        file_path
-                        and os.path.exists(file_path)
-                    ):
-                        os.remove(file_path)
+                    debug_file = generate_debug_overlay(
+                        temp_image_path,
+                        landmarks
+                    )
 
-            except Exception as premium_error:
+                    premium_file = generate_premium_report(
+                        temp_image_path,
+                        mesh_file,
+                        heatmap_file,
+                        debug_file
+                    )
 
-                logger.error(
-                    f"Premium error: {premium_error}"
-                )
-                
-        # Отправляем отчет
-        await message.reply(
-            report,
-            parse_mode="HTML"
-        )
-        
-        # Если юзер достиг какого-то достижения в таблице лидеров — пушим уведомление
-        if milestone_text:
-            await asyncio.sleep(1)  # Небольшая пауза, чтобы сообщения не слипались
-            await message.answer(milestone_text, parse_mode="HTML")
-            
-        await state.clear()
+                    if premium_file:
 
-    except Exception as e:
-        logger.error(f"Critical error during photo processing chain: {e}", exc_info=True)
-        await bot.delete_message(chat_id=message.chat.id, message_id=waiting_msg.message_id)
-        await message.answer(
-            f"❌ **Сбой внутренней обработки данных**\n\nПроизошла непредвиденная ошибка на сервере.\nДетали: `{str(e)}`",
-            parse_mode="Markdown"
-        )
-    finally:
-        if os.path.exists(temp_image_path):
-            try:
-                os.remove(temp_image_path)
-                logger.info(f"Temporary file {temp_image_path} cleared from host storage.")
-            except Exception as ce:
-                logger.error(f"Failed to clear temp file {temp_image_path}: {ce}")
+                        await message.answer_photo(
+                            FSInputFile(premium_file),
+                            caption="💎 Premium Face Analysis"
+                        )
+
+                    for file_path in [
+                        mesh_file,
+                        heatmap_file,
+                        debug_file,
+                        premium_file
+                    ]:
+
+                        if (
+                            file_path
+                            and os.path.exists(file_path)
+                        ):
+                            os.remove(file_path)
+
+                except Exception as premium_error:
+
+                    logger.error(
+                        f"Premium error: {premium_error}"
+                    )
+
+            # Отправляем отчет
+            await message.reply(
+                report,
+                parse_mode="HTML"
+            )
+
+            # Если юзер достиг какого-то достижения в таблице лидеров — пушим уведомление
+            if milestone_text:
+                await asyncio.sleep(1)  # Небольшая пауза, чтобы сообщения не слипались
+                await message.answer(milestone_text, parse_mode="HTML")
+
+            await state.clear()
+
+        except Exception as e:
+            logger.error(f"Critical error during photo processing chain: {e}", exc_info=True)
+            await bot.delete_message(chat_id=message.chat.id, message_id=waiting_msg.message_id)
+            await message.answer(
+                f"❌ **Сбой внутренней обработки данных**\n\nПроизошла непредвиденная ошибка на сервере.\nДетали: `{str(e)}`",
+                parse_mode="Markdown"
+            )
+
+    logger.info("Temporary analysis directory for user %s cleared from host storage.", user_id)
 
 @dp.message(AnalyzerStates.waiting_for_photo)
 async def handle_invalid_input_type(message: Message):
@@ -775,7 +774,7 @@ async def start_health_server() -> web.AppRunner | None:
 
 async def main():
     logger.info("Initializing polling engine with analyzer backend: %s", ANALYZER_BACKEND)
-    
+
     # --- НАСТРОЙКА КНОПКИ МЕНЮ ДЛЯ ПОЛЬЗОВАТЕЛЕЙ ---
     commands = [
         BotCommand(command="start", description="Обновить / Перезапустить бота 🔄")
@@ -783,7 +782,7 @@ async def main():
     # Регистрируем только одну команду, чтобы всё выглядело чисто
     await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
     logger.info("Bot command menu configured successfully.")
-    
+
     health_runner = await start_health_server()
 
     try:
